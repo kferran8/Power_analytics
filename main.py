@@ -18,36 +18,14 @@ def plotly():
     pass
 
 
-# запись результата в эксель
-def write_to_excel(df_initial, df_new, df_agg):
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    with writer as writer:
-        df_initial.to_excel(writer, sheet_name='Исходная статистика', index=False)
-        df_new.to_excel(writer, sheet_name='Кластеризация', index=False)
-        df_agg.to_excel(writer, sheet_name='Групповые результаты', index=False)
-    writer.save()
-    processed_data = output.getvalue()
-    return processed_data
-
-
-# Функция позволяющая сделать download на выгрузку данных расчета
-@st.cache
-def get_table_download_link(df_initial, df_new, df_agg):
-    """Generates a link allowing the data in a given panda dataframe to be downloaded
-    in:  dataframe
-    out: href string
-    """
-    val = write_to_excel(df_initial, df_new, df_agg)
-    b64 = base64.b64encode(val)  # val looks like b'...'
-    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Result_cluster.xlsx">' \
-           f'Скачать xlsx файл результата</a>'  # decode b'abc' => abc
-
-
 #Создание шаблона Эксель файла для ввода исходных данных
-def create_template_input_data():
-    year_now = datetime.datetime.now().year
-    date = pd.date_range(start=f'{year_now - 1}-01-01', end=f'{year_now}-01-01', freq='30min')[:-1]
+def create_template_input_data(start_time, finish_time):
+    output = BytesIO()
+
+    date = pd.date_range(start=f'{start_time.year}-{start_time.month}-{start_time.day}',
+                         end=f'{finish_time.year}-{finish_time.month}-{finish_time.day}', freq='30min')[:-1]
+
+
     active_power = [random.randint(0, 200) for _ in range(len(date))]
     reactive_power = [random.randint(0, 200) for _ in range(len(date))]
     df1 = pd.DataFrame(
@@ -89,11 +67,13 @@ def create_template_input_data():
     df3 = pd.DataFrame(
         {'Наименование показателя': name_date, 'Значение': res_date})
 
-    file_name_df2 = 'Шаблон ввода исходных данных.xlsx'
-    with pd.ExcelWriter(file_name_df2, mode='w') as writer:
+    with pd.ExcelWriter(output, mode='w', engine='xlsxwriter') as writer:
         df1.to_excel(writer, sheet_name='Получасовая статистика', index=False)
         df2.to_excel(writer, sheet_name='Заявл мощность', index=False)
         df3.to_excel(writer, sheet_name='Исх данные', index=False)
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
 
 
 def app():
@@ -121,12 +101,26 @@ def app():
         st.sidebar.text(f'Выбран лист: {select_sheet_names}')
         df_initial = pd.read_excel(uploaded_file, sheet_name=select_sheet_names)
 
-        option = st.selectbox(label='Укажите способ ввода исходных данных',
-                              options = ['Использовать шаблон Excel-файла', 'Использовать ручной ввод данных'])
+        with st.expander('Ввод исходных данных'):
+            # st.markdown('###### Ввод исходных данных')
+            option = st.selectbox(label='Укажите способ ввода исходных данных',
+                                  options = ['Использовать шаблон Excel-файла',
+                                             'Использовать ручной ввод данных'])
 
-        if option == 'Использовать шаблон Excel-файла':
-            create_template_input_data()
-            st.download_button(label='Скачать шаблон Excel-файла',)
+            if option == 'Использовать шаблон Excel-файла':
+                year_now = datetime.datetime.now().year
+                year_last = year_now - 1
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    start_time = st.date_input('Начальная дата', value = datetime.date(year_last, 1, 1))
+                with col2:
+                    finish_time = st.date_input('Конечная дата', value = datetime.date(year_last, 12, 31))
+
+                file_xlsx = create_template_input_data(start_time, finish_time)
+                st.download_button(label='Скачать шаблон Excel-файла',
+                                   data=file_xlsx,
+                                   file_name= 'Шаблон ввода исходных данных.xlsx')
 
 
 
