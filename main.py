@@ -7,8 +7,6 @@ import traceback
 #Как развернуть приложение можно почитать здесь
 #https://www.analyticsvidhya.com/blog/2021/06/deploy-your-ml-dl-streamlit-application-on-heroku/
 
-def trying():
-    pass
 
 def app():
     # st.title('Инструменты анализа электрической нагрузки')
