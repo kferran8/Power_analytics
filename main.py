@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import plotly.graph_objs as go
 import package_power_analytics
-import os
+import os, sys
 import datetime
 import traceback
 from io import BytesIO
@@ -81,7 +81,7 @@ def app():
     # st.subheader('Загрузка получасового расхода активной и реактивной энергии')
     st.markdown('### АНАЛИЗАТОР ЭЛЕКТРИЧЕСКОЙ НАГРУЗКИ')
 
-    # st.markdown('Загруженный файл в качестве исходных данных должен предусматривать ввод следующих параметров:')
+    st.markdown('Загруженный файл в качестве исходных данных должен предусматривать ввод следующих параметров:')
     # st.markdown('+ дату - в формате: гггг-мм-дд чч:мм, '
     #
     #             # ' * получасовую усредненную активную мощность в кВт, '
@@ -89,38 +89,128 @@ def app():
 
     try:
         # uploaded_file = st.file_uploader(label='Загрузите или перетащите файл Excel ', type=['xlsx', 'xls'])
-        uploaded_file = os.path.abspath('Исходная статистика\Анализируемая статистика.xlsx')
-        xls = pd.ExcelFile(uploaded_file)
-
-        sheet_names = xls.sheet_names
+        # uploaded_file = os.path.abspath('Исходная статистика\Анализируемая статистика.xlsx')
+        # xls = pd.ExcelFile(uploaded_file)
+        #
+        # sheet_names = xls.sheet_names
 
         ##### Настройки аналитической среды #####
         st.sidebar.header('Настройки аналитической среды')
-        st.sidebar.subheader('Параметры загруженного файла')
-        select_sheet_names = st.sidebar.selectbox("Выберите лист загруженного файла", (sheet_names))
-        st.sidebar.text(f'Выбран лист: {select_sheet_names}')
-        df_initial = pd.read_excel(uploaded_file, sheet_name=select_sheet_names)
+        # st.sidebar.subheader('Параметры загруженного файла')
+        # select_sheet_names = st.sidebar.selectbox("Выберите лист загруженного файла", (sheet_names))
+        # st.sidebar.text(f'Выбран лист: {select_sheet_names}')
+        # df_initial = pd.read_excel(uploaded_file, sheet_name=select_sheet_names)
 
-        with st.expander('Ввод исходных данных'):
-            # st.markdown('###### Ввод исходных данных')
-            option = st.selectbox(label='Укажите способ ввода исходных данных',
-                                  options = ['Использовать шаблон Excel-файла',
-                                             'Использовать ручной ввод данных'])
+        st.sidebar.markdown('#### Способ ввода исходных данных')
+        option = st.sidebar.selectbox(label='Укажите способ ввода исходных данных',
+                                  options=['Использовать шаблон Excel-файла',
+                                           'Использовать ручной ввод данных'])
 
+        if option == 'Использовать шаблон Excel-файла':
+            year_now = datetime.datetime.now().year
+            year_last = year_now - 1
+            year_now = datetime.datetime.now().year
+            year_last = year_now - 1
+            st.sidebar.markdown('#### Настройки шаблона')
+            col1, col2 = st.columns(2)
+            with col1:
+                start_time = st.sidebar.date_input('Начальная дата', value=datetime.date(year_last, 1, 1))
+            with col2:
+                finish_time = st.sidebar.date_input('Конечная дата', value=datetime.date(year_last, 12, 31))
+
+            file_xlsx = create_template_input_data(start_time, finish_time)
+            st.sidebar.download_button(label='Сгенерировать шаблон для ввода данных Excel-файла',
+                                       data=file_xlsx,
+                                       file_name='Шаблон ввода исходных данных.xlsx')
+        with st.expander('ИСХОДНЫЕ ДАННЫЕ ПРОЕКТА'):
             if option == 'Использовать шаблон Excel-файла':
-                year_now = datetime.datetime.now().year
-                year_last = year_now - 1
+                uploaded_file = st.file_uploader(label='Загрузите или перетащите файл Excel ', type=['xlsx', 'xls'])
+                if uploaded_file is None:
+                    pass
+                else:
+                    xls = pd.ExcelFile(uploaded_file)
+                    sheet_names = xls.sheet_names
+                    base_sheets = ['Получасовая статистика', 'Заявл мощность', 'Исх данные']
+                    for sheet in base_sheets:
+                        if sheet not in sheet_names:
+                            st.subheader('Выбранный шаблон не соответсвует базовому. '
+                                         'Скачайте и заполните шаблон для ввода данных.')
+                            raise Exception
+                    st.markdown('##### Заявленная мощность [кВт]')
 
-                col1, col2 = st.columns(2)
-                with col1:
-                    start_time = st.date_input('Начальная дата', value = datetime.date(year_last, 1, 1))
-                with col2:
-                    finish_time = st.date_input('Конечная дата', value = datetime.date(year_last, 12, 31))
+                    name_month = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+                    col1, col2, col3, col4 = st.columns(4)
+                    list_col = [col1, col2, col3, col4]
+                    df_declared = xls.parse('Заявл мощность')
 
-                file_xlsx = create_template_input_data(start_time, finish_time)
-                st.download_button(label='Скачать шаблон Excel-файла',
-                                   data=file_xlsx,
-                                   file_name= 'Шаблон ввода исходных данных.xlsx')
+                    # for row_index,row in df_declared.iterrows():
+                    #     for col in
+                    #
+                    #     with col1:
+                    #         st.number_input(label=row[1], value=row[2])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                # try:
+                #     uploaded_file = st.file_uploader(label='Загрузите или перетащите файл Excel ', type=['xlsx', 'xls'])
+                #     xls = pd.ExcelFile(uploaded_file)
+                #     sheet_names = xls.sheet_names
+                #     base_sheets = ['Получасовая статистика', 'Заявл мощность', 'Исх данные']
+                #     if xls == None:
+                #         raise Exception
+                #     # Проверка правильности загрузки шаблона. Сравниваем, чтобы данные были заполнены по шаблону
+                #     for sheet in base_sheets:
+                #         if sheet not in sheet_names:
+                #             st.subheader('Выбранный шаблон не соответсвует базовому. '
+                #                          'Скачайте и заполните шаблон для ввода данных.')
+                #             raise Exception('Отсутсвует загруженный файл исходных данных')
+                #
+                #
+                #     st.markdown('##### Заявленная мощность [кВт]')
+                #     name_month = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                #                   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+                #
+                # except Exception as e:
+                #     st.markdown(f'##### {e.args[3]}')
+                #
+                # try:
+                #
+                #
+                #
+                #
+                #
+                #     col1, col2, col3, col4, = st.columns(4)
+                #
+                #
+                #     # with col1:
+                #     #     st.number_input(label='Январь', value=4)
+                #
+                #
+                # except Exception as e:
+                #     pass
+
+
+
+
+
+
+            elif option == 'Использовать ручной ввод данных':
+                pass
+
 
 
 
@@ -141,7 +231,7 @@ def app():
 
 
     except Exception as e:
-        st.text('Необходимо загрузить файл...')
+        st.text(traceback.format_exc())
         # st.text(traceback.format_exc())
 
     else:
