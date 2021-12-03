@@ -10,6 +10,7 @@ from io import BytesIO
 import base64
 import numpy as np
 import sweetviz as sv
+from pandas_profiling import ProfileReport
 
 
 
@@ -166,8 +167,20 @@ def app():
                                    file_name='Исходных данных.xlsx')
 
         with st.expander('ИСХОДНЫЕ ГРАФИКИ НАГРУЗКИ'):
-            report = sv.analyze(df_power_statistics)
-            report.show_html('common analysis.html')
+
+
+
+            # profile = ProfileReport(df_power_statistics)
+            # profile.to_notebook_iframe()
+            # st.sidebar.download_button(label='Сгенерировать шаблон для ввода данных Excel-файла',
+            #                            data=profile,
+            #                            file_name='Шаблон ввода исходных данных.xlsx')
+
+
+
+
+            # report = sv.analyze(df_power_statistics)
+            # report.show_html('common analysis.html')
 
             # x = df_power_statistics.iloc[:,0]
             # y1 = df_power_statistics.iloc[:,1]
@@ -178,7 +191,7 @@ def app():
 
 
 
-            st.markdown('##### Заявленная мощность [кВт]')
+            # st.markdown('##### Заявленная мощность [кВт]')
 
 
 
