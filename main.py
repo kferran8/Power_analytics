@@ -9,14 +9,18 @@ import traceback
 from io import BytesIO
 import base64
 import numpy as np
+import sweetviz as sv
 
 
 
 # Как развернуть приложение можно почитать здесь
 # https://www.analyticsvidhya.com/blog/2021/06/deploy-your-ml-dl-streamlit-application-on-heroku/
 
-def plotly():
-    pass
+def plotly(x, y):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=x, y=y))
+    return fig
+
 
 
 #Создание шаблона Эксель файла для ввода исходных данных
@@ -106,7 +110,8 @@ def app():
             if option == 'Использовать шаблон Excel-файла':
                 uploaded_file = st.file_uploader(label='Загрузите или перетащите файл Excel ', type=['xlsx', 'xls'])
                 if uploaded_file is None:
-                    pass
+                    st.markdown('Необходимо загрузить шаблон исходных данных.')
+                    raise Exception
                 else:
                     xls = pd.ExcelFile(uploaded_file)
                     sheet_names = xls.sheet_names
@@ -128,24 +133,23 @@ def app():
                             st.markdown('Отсутсвуют данные, которые должны быть ввведены в загруженном шаблоне.')
                             raise Exception
 
-                    st.markdown('##### Заявленная мощность [кВт]')
+                    # Проверка на наличие данных заявленной мощности
+                    # st.markdown('##### Заявленная мощность [кВт]')
                     df_declared = xls.parse('Заявл мощность')
                     for row_index, row in df_declared.iterrows():
-                        st.markdown(f'###### {row[1]}')
+                        # st.markdown(f'###### {row[1]}')
                         if row[2] is not np.nan:
-                            st.text(row[2])
+                            # st.text(row[2])
+                            pass
                         else:
-                            st.markdown('Отсутсвуют данные, которые должны быть ввведены в загруженном шаблоне.')
+                            st.markdown('Отсутсвуют данные заявленной мощности')
                             raise Exception
 
-
-
-
-
-
-
-
-
+                    df_power_statistics = xls.parse('Получасовая статистика')
+                    if df_power_statistics.isnull().values.any() == True:
+                        st.markdown('**Получасовая статистика активной и реактивной мощности не должна'
+                                    'содержать пропусков!**')
+                        raise Exception ('Ошибка. Не заполнены данные в исходной статистике.')
 
             elif option == 'Использовать ручной ввод данных':
                 st.markdown('##### Заявленная мощность [кВт]')
@@ -160,6 +164,22 @@ def app():
                 st.download_button(label='Сохранить изменения в Excel-файл',
                                    data='',
                                    file_name='Исходных данных.xlsx')
+
+        with st.expander('ИСХОДНЫЕ ГРАФИКИ НАГРУЗКИ'):
+            report = sv.analyze(df_power_statistics)
+            report.show_html('common analysis.html')
+
+            # x = df_power_statistics.iloc[:,0]
+            # y1 = df_power_statistics.iloc[:,1]
+            # fig = plotly(x=x, y=y1)
+            # st.write(fig)
+
+
+
+
+
+            st.markdown('##### Заявленная мощность [кВт]')
+
 
 
 
@@ -223,13 +243,6 @@ def app():
 
 
 
-            elif option == 'Использовать ручной ввод данных':
-                pass
-
-
-
-
-
 
         # with st.expander('Ввод исходных данных'):
         #     st.write(df_initial)
@@ -247,21 +260,7 @@ def app():
 
     except Exception as e:
         st.text(traceback.format_exc())
-        # st.text(traceback.format_exc())
 
-    else:
-        try:
-            print('')
-
-
-
-
-
-
-
-
-        except Exception:
-            st.subheader('Некоректно введены данные!')
 
 
 if __name__ == '__main__':
