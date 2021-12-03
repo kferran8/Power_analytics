@@ -8,6 +8,7 @@ import datetime
 import traceback
 from io import BytesIO
 import base64
+import numpy as np
 
 
 
@@ -77,41 +78,20 @@ def create_template_input_data(start_time, finish_time):
 
 
 def app():
-    # st.title('Инструменты анализа электрической нагрузки')
-    # st.subheader('Загрузка получасового расхода активной и реактивной энергии')
     st.markdown('### АНАЛИЗАТОР ЭЛЕКТРИЧЕСКОЙ НАГРУЗКИ')
-
     st.markdown('Загруженный файл в качестве исходных данных должен предусматривать ввод следующих параметров:')
-    # st.markdown('+ дату - в формате: гггг-мм-дд чч:мм, '
-    #
-    #             # ' * получасовую усредненную активную мощность в кВт, '
-    #             # ' * получасовую усредненную реактивную мощность в кВАр')
-
     try:
-        # uploaded_file = st.file_uploader(label='Загрузите или перетащите файл Excel ', type=['xlsx', 'xls'])
-        # uploaded_file = os.path.abspath('Исходная статистика\Анализируемая статистика.xlsx')
-        # xls = pd.ExcelFile(uploaded_file)
-        #
-        # sheet_names = xls.sheet_names
-
-        ##### Настройки аналитической среды #####
         st.sidebar.header('Настройки аналитической среды')
-        # st.sidebar.subheader('Параметры загруженного файла')
-        # select_sheet_names = st.sidebar.selectbox("Выберите лист загруженного файла", (sheet_names))
-        # st.sidebar.text(f'Выбран лист: {select_sheet_names}')
-        # df_initial = pd.read_excel(uploaded_file, sheet_name=select_sheet_names)
-
         st.sidebar.markdown('#### Способ ввода исходных данных')
         option = st.sidebar.selectbox(label='Укажите способ ввода исходных данных',
                                   options=['Использовать шаблон Excel-файла',
                                            'Использовать ручной ввод данных'])
-
         if option == 'Использовать шаблон Excel-файла':
             year_now = datetime.datetime.now().year
             year_last = year_now - 1
             year_now = datetime.datetime.now().year
             year_last = year_now - 1
-            st.sidebar.markdown('#### Настройки шаблона')
+            st.sidebar.markdown('#### Генерация шаблона')
             col1, col2 = st.columns(2)
             with col1:
                 start_time = st.sidebar.date_input('Начальная дата', value=datetime.date(year_last, 1, 1))
@@ -136,19 +116,54 @@ def app():
                             st.subheader('Выбранный шаблон не соответсвует базовому. '
                                          'Скачайте и заполните шаблон для ввода данных.')
                             raise Exception
+
+                    # Заполнение информационного поля ввода исходных данных
+                    st.markdown('##### Исходные данные')
+                    df_initial_data = xls.parse('Исх данные')
+                    for row_index,row in df_initial_data.iterrows():
+                        st.markdown(f'###### {row[0]}')
+                        if row[1] is not np.nan:
+                            st.text(row[1])
+                        else:
+                            st.markdown('Отсутсвуют данные, которые должны быть ввведены в загруженном шаблоне.')
+                            raise Exception
+
                     st.markdown('##### Заявленная мощность [кВт]')
-
-                    name_month = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-                                      'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
-                    col1, col2, col3, col4 = st.columns(4)
-                    list_col = [col1, col2, col3, col4]
                     df_declared = xls.parse('Заявл мощность')
+                    for row_index, row in df_declared.iterrows():
+                        st.markdown(f'###### {row[1]}')
+                        if row[2] is not np.nan:
+                            st.text(row[2])
+                        else:
+                            st.markdown('Отсутсвуют данные, которые должны быть ввведены в загруженном шаблоне.')
+                            raise Exception
 
-                    # for row_index,row in df_declared.iterrows():
-                    #     for col in
-                    #
-                    #     with col1:
-                    #         st.number_input(label=row[1], value=row[2])
+
+
+
+
+
+
+
+
+
+            elif option == 'Использовать ручной ввод данных':
+                st.markdown('##### Заявленная мощность [кВт]')
+
+                # col1, col2, col3, col4 = st.columns(4)
+                # list_col = [col1, col2, col3, col4]
+                # n = 3
+                # for col in list_col:
+                #     with col:
+                #         st.number_input(label='', value=0)
+                #         n += 1
+                st.download_button(label='Сохранить изменения в Excel-файл',
+                                   data='',
+                                   file_name='Исходных данных.xlsx')
+
+
+
+
 
 
 
