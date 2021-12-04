@@ -71,10 +71,30 @@ def create_template_input_data(start_time, finish_time):
         {'Наименование показателя': name_date, 'Значение': res_date})
 
     buffer = BytesIO()
-    with pd.ExcelWriter(buffer, mode='w', engine='openpyxl') as writer:
-        df1.to_excel(writer, sheet_name='Получасовая статистика', index=False)
-        df2.to_excel(writer, sheet_name='Заявл мощность', index=False)
-        df3.to_excel(writer, sheet_name='Исх данные', index=False)
+    writer = pd.ExcelWriter(buffer, engine='xlsxwriter')
+    df3.to_excel(writer, sheet_name='Исх данные', index=False)
+    df2.to_excel(writer, sheet_name='Заявл мощность', index=False)
+    df1.to_excel(writer, sheet_name='Получасовая статистика', index=False)
+
+    workbook = writer.book
+    worksheet1 = writer.sheets['Исх данные']
+    fmt = workbook.add_format({'font_name':'Times New Roman', 'font_size': '12', 'text_wrap':'True'})
+    worksheet1.set_column('A:A', 70, fmt)
+    worksheet1.set_column('B:B', 30, fmt)
+
+    #Здесь можно посмотреть форматирование эксель https://russianblogs.com/article/9047967407/
+    format = workbook.add_format({'align': 'center', 'valign':'vcenter', 'border': 1})
+    worksheet1.conditional_format('A1:A10', {'type' : 'no_blanks', 'format': format})
+    worksheet1.conditional_format('B1:B10', {'type': 'no_blanks', 'format': format})
+
+    worksheet2 = writer.sheets['Заявл мощность']
+    worksheet2.set_column('A:C', 25, fmt)
+    worksheet2.conditional_format('A1:C13', {'type': 'no_blanks', 'format': format})
+
+    worksheet3 = writer.sheets['Получасовая статистика']
+    worksheet3.set_column('A:C', 25, fmt)
+    worksheet3.conditional_format('A1:C500', {'type': 'no_blanks', 'format': format})
+
 
     writer.save()
     processed_data = buffer.getvalue()
