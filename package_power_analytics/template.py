@@ -92,8 +92,23 @@ def create_template_input_data(start_time, finish_time, df1=None, df2=None, df3=
         writer.save()
         processed_data = buffer.getvalue()
 
-
-
-
-
     return processed_data
+
+
+#функция создает данные в буфере обмена
+def write_to_excel(*args):
+    buffer = BytesIO()
+    writer = pd.ExcelWriter(buffer, engine='xlsxwriter')
+    for arg in args:
+        arg.to_excel(writer, sheet_name=0, index=False)
+
+    writer.save()
+    # for count, df in enumerate(args):
+    #     with writer as writer:
+    #         df.to_excel(writer, sheet_name=count, index=False)
+
+
+
+    processed_data = buffer.getvalue()
+    return processed_data
+

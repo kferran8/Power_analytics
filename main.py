@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from package_power_analytics.template import create_template_input_data
+from package_power_analytics.template import create_template_input_data, write_to_excel
 import package_power_analytics.myplotly as mp
 import package_power_analytics.analytic as an
 import os, sys
@@ -17,7 +17,7 @@ import numpy as np
 # https://www.analyticsvidhya.com/blog/2021/06/deploy-your-ml-dl-streamlit-application-on-heroku/
 
 # Функция для описательной статистики
-def status(x):
+def describe_statistics(x):
     return pd.Series([x.count(),x.min(),x.idxmin(), round(x.quantile(.25)), round(x.median()),
                       round(x.quantile(.75)),round(x.mean()), round(x.max()),x.idxmax(),round(x.mad()),round(x.var()),
                       round(x.std()),round(x.skew()),round(x.kurt())],
@@ -25,6 +25,20 @@ def status(x):
                     'Медиана','75% квантиль','Среднее', 'Максимум','Индекс максимальнрого значения',
                             'Среднее абсолютное отклонение','Дисперсия','Среднеквадратичное отклонение',
                             'Асимметрия','Эксцесс'])
+
+# Функция позволяющая сделать download на выгрузку данных расчета
+# list_data_frame
+@st.cache
+def get_table_download_link(*args):
+    """Generates a link allowing the data in a given panda dataframe to be downloaded
+    in:  *args - через запятую поданные количество датафреймов для записи в файл
+    out: href string
+    """
+    val = write_to_excel(args)
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Result_cluster.xlsx">' \
+           f'Скачать xlsx файл результата</a>'  # decode b'abc' => abc
+
 
 def app():
     st.markdown('### АНАЛИЗАТОР ЭЛЕКТРИЧЕСКОЙ НАГРУЗКИ')
@@ -62,15 +76,18 @@ def app():
                         raise Exception
 
                 # Заполнение информационного поля ввода исходных данных
-                st.markdown('##### Исходные данные')
-                df_initial_data = xls.parse('Исх данные')
-                for row_index,row in df_initial_data.iterrows():
-                    st.markdown(f'###### {row[0]}')
-                    if row[1] is not np.nan:
-                        st.text(row[1])
-                    else:
-                        st.markdown('Отсутствуют данные, которые должны быть введены в загруженном шаблоне.')
-                        raise Exception
+
+                agree = st.checkbox('Показать загруженные данные')
+                if agree:
+                    st.markdown('##### Исходные данные')
+                    df_initial_data = xls.parse('Исх данные')
+                    for row_index,row in df_initial_data.iterrows():
+                        st.markdown(f'###### {row[0]}')
+                        if row[1] is not np.nan:
+                            st.text(row[1])
+                        else:
+                            st.markdown('Отсутствуют данные, которые должны быть введены в загруженном шаблоне.')
+                            raise Exception
 
                 # Проверка на наличие данных заявленной мощности
                 df_declared = xls.parse('Заявл мощность')
@@ -135,16 +152,42 @@ def app():
                     col1, col2 = st.columns(2)
                     with col1:
                         st.markdown(f'##### {df_power_statistics.columns[1]}')
-                        res = status(df_power_statistics.iloc[:, 1])
-                        for i, v in res.items():
+                        res1 = describe_statistics(df_power_statistics.iloc[:, 1])
+                        for i, v in res1.items():
                             st.markdown(f'###### {i}')
                             st.text(v)
                     with col2:
                         st.markdown(f'##### {df_power_statistics.columns[2]}')
-                        res = status(df_power_statistics.iloc[:, 2])
-                        for i, v in res.items():
+                        res2 = describe_statistics(df_power_statistics.iloc[:, 2])
+                        for i, v in res2.items():
                             st.markdown(f'###### {i}')
                             st.text(v)
+                    # ссылка для скачивания датафрейма
+                    file_xlsx = write_to_excel(df_power_statistics)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                      data=file_xlsx,
+                                      file_name='Результаты описательной статистики.xlsx')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 show_activ_power = st.checkbox('Показать график изменения активной мощности')
                 if show_activ_power:
