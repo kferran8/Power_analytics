@@ -16,15 +16,7 @@ import numpy as np
 # Как развернуть приложение можно почитать здесь
 # https://www.analyticsvidhya.com/blog/2021/06/deploy-your-ml-dl-streamlit-application-on-heroku/
 
-# Функция для описательной статистики
-def describe_statistics(x):
-    return pd.Series([x.count(),x.min(),x.idxmin(), round(x.quantile(.25)), round(x.median()),
-                      round(x.quantile(.75)),round(x.mean()), round(x.max()),x.idxmax(),round(x.mad()),round(x.var()),
-                      round(x.std()),round(x.skew()),round(x.kurt())],
-                     index=['Всего','Минимум','Минимальная позиция','25% квантиль',
-                    'Медиана','75% квантиль','Среднее', 'Максимум','Индекс максимальнрого значения',
-                            'Среднее абсолютное отклонение','Дисперсия','Среднеквадратичное отклонение',
-                            'Асимметрия','Эксцесс'])
+
 
 # Функция позволяющая сделать download на выгрузку данных расчета
 # list_data_frame
@@ -76,11 +68,11 @@ def app():
                         raise Exception
 
                 # Заполнение информационного поля ввода исходных данных
-
+                df_initial_data = xls.parse('Исх данные')
                 agree = st.checkbox('Показать загруженные данные')
                 if agree:
                     st.markdown('##### Исходные данные')
-                    df_initial_data = xls.parse('Исх данные')
+
                     for row_index,row in df_initial_data.iterrows():
                         st.markdown(f'###### {row[0]}')
                         if row[1] is not np.nan:
@@ -149,24 +141,22 @@ def app():
                     st.write('Описательная статистика позволяет обобщать первичные результаты, '
                              'полученные при наблюдении или в эксперименте. В качестве статистических показателей '
                              'используются: среднее, медиана, мода, дисперсия, стандартное отклонение и др.')
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.markdown(f'##### {df_power_statistics.columns[1]}')
-                        res1 = describe_statistics(df_power_statistics.iloc[:, 1])
-                        for i, v in res1.items():
-                            st.markdown(f'###### {i}')
-                            st.text(v)
-                    with col2:
-                        st.markdown(f'##### {df_power_statistics.columns[2]}')
-                        res2 = describe_statistics(df_power_statistics.iloc[:, 2])
-                        for i, v in res2.items():
-                            st.markdown(f'###### {i}')
-                            st.text(v)
-                    # ссылка для скачивания датафрейма
-                    file_xlsx = write_to_excel(df_power_statistics)
+                    res1 = an.describe_statistics(one_d_df=df_power_statistics.iloc[:, [1]])
+                    st.markdown(f'###### {df_power_statistics.iloc[:, [1]].columns[0]}')
+                    st.write(res1)
+
+                    res2= an.describe_statistics(one_d_df=df_power_statistics.iloc[:, [2]])
+                    st.markdown(f'###### {df_power_statistics.iloc[:, [2]].columns[0]}')
+                    st.write(res2)
+                    #Запись результатов в файл
+                    file_xlsx = write_to_excel(res1, res2)
                     st.download_button(label='Сохранить результаты в xlsx файл',
                                       data=file_xlsx,
                                       file_name='Результаты описательной статистики.xlsx')
+
+
+
+
 
 
 
@@ -220,7 +210,7 @@ def app():
         if check_coefficients:
             with st.expander('АНАЛИЗ ГРАФИКОВ НАГРУЗОК'):
                 st.markdown('##### Определение основных физических величин графиков нагрузки')
-                check_mean_power = st.checkbox('Расчет средней нагрузки')
+                check_mean_power = st.checkbox('Расчет средней месячной нагрузки')
                 if check_mean_power:
                     st.markdown('###### Средняя нагрузка')
                     st.write('Средняя нагрузка – это постоянная, неизменная величина за любой рассматриваемый '
@@ -230,6 +220,13 @@ def app():
                     df_mean = power_coefficients.calculation_mean_power_of_month().astype(str)
                     st.write('Результаты расчета')
                     st.write(df_mean)
+
+                    #Запись результатов в файл
+                    file_xlsx = write_to_excel(df_mean)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                      data=file_xlsx,
+                                      file_name='Результаты расчета средней нагрузки.xlsx')
+
 
 
 

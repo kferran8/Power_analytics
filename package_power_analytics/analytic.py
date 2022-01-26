@@ -6,6 +6,40 @@ import sys
 
 global_result = pd.DataFrame()
 
+
+# Функция для описательной статистики
+def describe_statistics(one_d_df):
+    """Входные данные Одномерный датафрейм"""
+    x = one_d_df.iloc[:,0]
+
+
+    data = [['Всего', x.count()],
+            ['Минимум', x.min()],
+            ['Минимальная позиция', x.idxmin()],
+            ['25% квантиль', round(x.quantile(.25))],
+            ['Медиана', round(x.median())],
+            ['75% квантиль', round(x.quantile(.75))],
+            ['Среднее', round(x.mean())],
+            ['Максимум', round(x.max())],
+            ['Индекс максимальнрого значения',  x.idxmax()],
+            ['Среднее абсолютное отклонение',  round(x.mad())],
+            ['Дисперсия', round(x.var())],
+            ['Среднеквадратичное отклонение', round(x.std())],
+            ['Асимметрия', round(x.skew())],
+            ['Эксцесс', round(x.kurt())]]
+
+    df_result = pd.DataFrame(data, columns=['Наименование статистики', f'Значение (\n{one_d_df.columns[0]})'])
+    return df_result
+
+        # pd.Series([x.count(),x.min(),x.idxmin(), round(x.quantile(.25)), round(x.median()),
+        #               round(x.quantile(.75)),round(x.mean()), round(x.max()),x.idxmax(),round(x.mad()),round(x.var()),
+        #               round(x.std()),round(x.skew()),round(x.kurt())],
+        #              index=['Всего','Минимум','Минимальная позиция','25% квантиль',
+        #             'Медиана','75% квантиль','Среднее', 'Максимум','Индекс максимальнрого значения',
+        #                     'Среднее абсолютное отклонение','Дисперсия','Среднеквадратичное отклонение',
+        #                     'Асимметрия','Эксцесс'])
+
+
 class PowerGraphCoefficients:
 
     def __init__(self, df):
