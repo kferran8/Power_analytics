@@ -221,11 +221,29 @@ def app():
                     st.write('Результаты расчета')
                     st.write(df_mean)
 
+                    dfx = df_mean.iloc[:, [0]]
+                    dfy_mean_act = df_mean.iloc[:, [1]]
+                    dfy_mean_react = df_mean.iloc[:, [2]]
+                    dfy_mean_full = df_mean.iloc[:, [3]]
+                    fig = mp.my_histogram(dfx, dfy_mean_act, dfy_mean_react, dfy_mean_full, )
+                    st.write(fig)
+
                     #Запись результатов в файл
                     file_xlsx = write_to_excel(df_mean)
                     st.download_button(label='Сохранить результаты в xlsx файл',
                                       data=file_xlsx,
                                       file_name='Результаты расчета средней нагрузки.xlsx')
+
+                check_mean_power = st.checkbox('Расчет среднеквадратичной месячной нагрузки')
+                if check_mean_power:
+                    st.markdown('###### Среднеквадратичная месячная нагрузка')
+                    st.write('Среднеквадратичная нагрузка – это постоянная, неизменная нагрузка за любой рассматриваемый'
+                             ' промежуток времени, которая обуславливает такие же потери мощности в проводниках, '
+                             'как и изменяющаяся за это время нагрузка.')
+                    st.latex(r'''P_{ск} = \sqrt { \frac  {\sum_{i=1}^{n} P^{2}_{сi} }  {N} }''')
+
+
+
 
 
 

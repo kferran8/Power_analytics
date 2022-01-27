@@ -31,14 +31,6 @@ def describe_statistics(one_d_df):
     df_result = pd.DataFrame(data, columns=['Наименование статистики', f'Значение (\n{one_d_df.columns[0]})'])
     return df_result
 
-        # pd.Series([x.count(),x.min(),x.idxmin(), round(x.quantile(.25)), round(x.median()),
-        #               round(x.quantile(.75)),round(x.mean()), round(x.max()),x.idxmax(),round(x.mad()),round(x.var()),
-        #               round(x.std()),round(x.skew()),round(x.kurt())],
-        #              index=['Всего','Минимум','Минимальная позиция','25% квантиль',
-        #             'Медиана','75% квантиль','Среднее', 'Максимум','Индекс максимальнрого значения',
-        #                     'Среднее абсолютное отклонение','Дисперсия','Среднеквадратичное отклонение',
-        #                     'Асимметрия','Эксцесс'])
-
 
 class PowerGraphCoefficients:
 
