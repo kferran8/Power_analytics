@@ -33,6 +33,7 @@ def myplotly(dfx, *args, rolling=True, window_rolling=336):
 
 
 def my_histogram(dfx, *args):
+    tminlst, tmaxlst = [], []
     fig = go.Figure()
     for y in args:
         ser_x = dfx.iloc[:, 0]
@@ -40,6 +41,14 @@ def my_histogram(dfx, *args):
         fig.add_trace(go.Bar(x=ser_x, y=ser_y,
                       name=y.columns[0]
                       ))
+        # Ищем минимумы и максимы для разметки по масштабу осей
+        tminlst.append(float(ser_y.min()))
+        tmaxlst.append(float(ser_y.max()))
+
+
+
+    max_yaxes_scale = 1.02*max(tmaxlst)
+    min_yaxes_scale = 0.95*min(tminlst)
 
     fig.update_layout(legend_orientation="h",
                       legend=dict(x=.5, xanchor="center"),
@@ -51,5 +60,6 @@ def my_histogram(dfx, *args):
                       # width=1000
                       )
 
+    fig.update_yaxes(range=[min_yaxes_scale, max_yaxes_scale])
 
     return fig

@@ -167,11 +167,15 @@ class PowerGraphCoefficients:
             pass
         else:
             self.calculation_square_power_of_month()
+        if self.df_mean_power is not None:
+            pass
+        else:
+            self.calculation_mean_power_of_month()
         df_square = self.df_square_power.set_index('Период наблюдений')
         df_mean = self.df_mean_power.set_index('Период наблюдений')
         coefficient_shape = pd.DataFrame()
         coefficient_shape['Коэффициент формы'] = round(df_square.iloc[:, 0] / df_mean.iloc[:, 0], 3)
-        coefficient_shape = coefficient_shape.reset_index(inplace=False)
+        coefficient_shape = coefficient_shape.reset_index(inplace=False).dropna()
         self.df_coefficient_shape = coefficient_shape
         return coefficient_shape
 

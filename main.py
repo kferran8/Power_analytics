@@ -38,8 +38,6 @@ def app():
         with st.expander('ГЕНЕРАЦИЯ ШАБЛОНА ДЛЯ ВВОДА ИСХОДНЫХ ДАННЫХ ПРОЕКТА'):
             year_now = datetime.datetime.now().year
             year_last = year_now - 1
-            year_now = datetime.datetime.now().year
-            year_last = year_now - 1
             col1, col2 = st.columns(2)
             with col1:
                 start_time = st.date_input('Начальная дата', value=datetime.date(year_last, 1, 1))
@@ -154,31 +152,6 @@ def app():
                                       data=file_xlsx,
                                       file_name='Результаты описательной статистики.xlsx')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 show_activ_power = st.checkbox('Показать график изменения активной мощности')
                 if show_activ_power:
                     dfx = df_power_statistics.iloc[:,[0]]
@@ -204,11 +177,20 @@ def app():
                     fig = mp.myplotly(dfx, dfy_react)
                     st.write(fig)
 
-        st.sidebar.markdown('#### Анализ графиков нагрузок')
+        st.sidebar.markdown('#### Анализ графиков нагрузок в разрезе месяца')
         check_coefficients = st.sidebar.checkbox('Выполнить анализ графиков нагрузок')
+        # Делаем предварительные расчеты
         power_coefficients = an.PowerGraphCoefficients(df=df_power_statistics)
+        df_mean = power_coefficients.calculation_mean_power_of_month()
+        df_square = power_coefficients.calculation_square_power_of_month()
+        df_max = power_coefficients.calculation_max_power_of_month()
+        df_coef_fill = power_coefficients.coefficient_fill()
+        df_coef_shape = power_coefficients.coefficient_shape()
+        df_coef_fi = power_coefficients.coefficient_fi()
+        df_coef_max = power_coefficients.coefficient_max()
+
         if check_coefficients:
-            with st.expander('АНАЛИЗ ГРАФИКОВ НАГРУЗОК'):
+            with st.expander('АНАЛИЗ ГРАФИКОВ НАГРУЗОК В РАЗРЕЗЕ МЕСЯЦА'):
                 st.markdown('##### Определение основных физических величин графиков нагрузки')
                 check_mean_power = st.checkbox('Расчет средней месячной нагрузки')
                 if check_mean_power:
@@ -217,16 +199,26 @@ def app():
                              'промежуток времени, которая вызывает такой же расход электроэнергии, '
                              'как и изменяющаяся за это время нагрузка.')
                     st.latex(r'''P_с =  \frac {\sum_{i=1}^{n} P_{сi} }  {N}''')
-                    df_mean = power_coefficients.calculation_mean_power_of_month().astype(str)
-                    st.write('Результаты расчета')
-                    st.write(df_mean)
 
-                    dfx = df_mean.iloc[:, [0]]
-                    dfy_mean_act = df_mean.iloc[:, [1]]
-                    dfy_mean_react = df_mean.iloc[:, [2]]
-                    dfy_mean_full = df_mean.iloc[:, [3]]
+                    df_mean_str = df_mean.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_mean_str)
+
+                    dfx = df_mean_str.iloc[:, [0]]
+                    dfy_mean_act = df_mean_str.iloc[:, [1]]
+                    dfy_mean_react = df_mean_str.iloc[:, [2]]
+                    dfy_mean_full = df_mean_str.iloc[:, [3]]
                     fig = mp.my_histogram(dfx, dfy_mean_act, dfy_mean_react, dfy_mean_full, )
                     st.write(fig)
+
+                    act_mean = round(df_mean.iloc[:, 1].mean(), 2)
+                    react_mean = round(df_mean.iloc[:, 2].mean(), 2)
+                    full_mean = round(df_mean.iloc[:, 3].mean(), 2)
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - средняя активная нагрузка в исследуемом периоде: **{act_mean}** кВт')
+                    st.markdown(f'###### - средняя реактивная нагрузка в исследуемом периоде: **{react_mean}** кВАр')
+                    st.markdown(f'###### - средняя полная нагрузка в исследуемом периоде: **{full_mean}** кВА')
 
                     #Запись результатов в файл
                     file_xlsx = write_to_excel(df_mean)
@@ -234,13 +226,236 @@ def app():
                                       data=file_xlsx,
                                       file_name='Результаты расчета средней нагрузки.xlsx')
 
-                check_mean_power = st.checkbox('Расчет среднеквадратичной месячной нагрузки')
-                if check_mean_power:
+                # Расчет среднеквадратичной нагрузки
+                check_square_power = st.checkbox('Расчет среднеквадратичной месячной нагрузки')
+                if check_square_power:
                     st.markdown('###### Среднеквадратичная месячная нагрузка')
                     st.write('Среднеквадратичная нагрузка – это постоянная, неизменная нагрузка за любой рассматриваемый'
                              ' промежуток времени, которая обуславливает такие же потери мощности в проводниках, '
                              'как и изменяющаяся за это время нагрузка.')
                     st.latex(r'''P_{ск} = \sqrt { \frac  {\sum_{i=1}^{n} P^{2}_{сi} }  {N} }''')
+
+                    df_square_str = df_square.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_square)
+
+                    dfx = df_square_str.iloc[:, [0]]
+                    dfy_square_act = df_square_str.iloc[:, [1]]
+                    dfy_square_react = df_square_str.iloc[:, [2]]
+                    dfy_square_full = df_square_str.iloc[:, [3]]
+                    fig = mp.my_histogram(dfx, dfy_square_act, dfy_square_react, dfy_square_full )
+                    st.write(fig)
+
+                    act_square = round(df_square.iloc[:, 1].mean(), 2)
+                    react_square = round(df_square.iloc[:, 2].mean(), 2)
+                    full_square = round(df_square.iloc[:, 3].mean(), 2)
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - средневадратичная активная нагрузка в '
+                                f'исследуемом периоде: **{act_square}** кВт')
+                    st.markdown(f'###### - средневадратичная реактивная нагрузка в '
+                                f'исследуемом периоде: **{react_square}** кВАр')
+                    st.markdown(f'###### - средневадратичная полная нагрузка в '
+                                f'исследуемом периоде: **{full_square}** кВА')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_square)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета среднеквадратичной нагрузки.xlsx')
+
+                # Расчет максимальной месячной нагрузки
+                check_max_power = st.checkbox('Расчет максимальной месячной нагрузки')
+                if check_max_power:
+                    st.markdown('###### Максимальная месячная нагрузка')
+                    st.write(
+                        'Максимальная нагрузка – это наибольшая из средних нагрузок за '
+                        'рассматриваемый промежуток времени.')
+                    st.latex(r'''P_{max} = max(P_i)''')
+
+                    df_max_str = df_max.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_max_str)
+
+                    dfx = df_max_str.iloc[:, [0]]
+                    dfy_max_act = df_max_str.iloc[:, [1]]
+                    dfy_max_react = df_max_str.iloc[:, [2]]
+                    dfy_max_full = df_max_str.iloc[:, [3]]
+                    fig = mp.my_histogram(dfx, dfy_max_act, dfy_max_react, dfy_max_full)
+                    st.write(fig)
+
+                    act_max = round(df_max.iloc[:, 1].max(), 2)
+                    react_max = round(df_max.iloc[:, 2].max(), 2)
+                    full_max = round(df_max.iloc[:, 3].max(), 2)
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - средневадратичная активная нагрузка в '
+                                f'исследуемом периоде: **{act_max}** кВт')
+                    st.markdown(f'###### - средневадратичная реактивная нагрузка в '
+                                f'исследуемом периоде: **{react_max}** кВАр')
+                    st.markdown(f'###### - средневадратичная полная нагрузка в '
+                                f'исследуемом периоде: **{full_max}** кВА')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_max)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета максимальной нагрузки.xlsx')
+
+                st.markdown('##### Определение безразмерных физических величин графиков нагрузки')
+
+               # Коэффициент максимума график
+                check_cof_max_power = st.checkbox('Расчет коэффициента максимума графика')
+                if check_cof_max_power:
+                    st.markdown('###### Коэффициент максимума график')
+                    st.write(
+                        'Наряду с физическими величинами графики нагрузки описываются безразмерными коэффициентами. '
+                        'Эти коэффициенты устанавливают связь между основными физическими величинами, характеризуют '
+                        'неравномерность графиков нагрузки, а также использование электроприёмников и потребителей '
+                        'электроэнергии по мощности и времени.')
+
+                    st.latex(r'''K_{м.г} = \frac  {P_м}  {P_{ср}} ''')
+
+                    df_coef_max_str = df_coef_max.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_coef_max_str)
+
+                    dfx = df_coef_max_str.iloc[:, [0]]
+                    dfy_coef_max = df_coef_max_str.iloc[:, [1]]
+                    fig = mp.my_histogram(dfx, dfy_coef_max)
+                    st.write(fig)
+
+                    max_coef = round(df_coef_max.iloc[:, 1].max(), 2)
+                    df_temp = df_coef_max.loc[df_coef_max.iloc[:, 1] == df_coef_max.iloc[:, 1].max()]
+                    max_mohtn_coef = df_temp.iloc[:, 0].values[0]
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - наибольшее значение коэффициента максимума в '
+                                f'исследуемом периоде: **{max_coef}**')
+                    st.markdown(f'###### - месяц с наибольшим коэффициентом максимума '
+                                f' **{max_mohtn_coef}**')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_coef_max)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета коэффициента максимума.xlsx')
+
+                # Коэффициент заполенния графика
+                check_coef_fill_power = st.checkbox('Расчет коэффициента заполнения графика')
+                if check_coef_fill_power:
+                    st.markdown('###### Коэффициент заполнения графика.')
+                    st.write('Характеризует неравномерность графика нагрузок. Для рациональной передачи электроэнергии, '
+                                'т.е. снижения к минимуму потерь в питающих и распределительных сетях предприятия, '
+                                'коэффициент заполнения графика должен быть приближен к единице, '
+                                'что определяется равномерностью включения технологических потребителей электроэнергии')
+
+                    st.latex(r'''K_{з.г} = \frac  {P_{ср}}  {P_{м}} ''')
+
+                    df_coef_fill_str = df_coef_fill.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_coef_fill_str)
+
+                    dfx = df_coef_fill_str.iloc[:, [0]]
+                    dfy_coef_fill = df_coef_fill_str.iloc[:, [1]]
+                    fig = mp.my_histogram(dfx, dfy_coef_fill)
+                    st.write(fig)
+
+                    max_coef_fill = round(df_coef_fill.iloc[:, 1].max(), 2)
+                    df_temp = df_coef_fill.loc[df_coef_fill.iloc[:, 1] == df_coef_fill.iloc[:, 1].max()]
+                    max_mohtn_coef = df_temp.iloc[:, 0].values[0]
+
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - наибольшее значение коэффициента заполнения в '
+                                f'исследуемом периоде: **{max_coef_fill}**')
+                    st.markdown(f'###### - месяц с наибольшим коэффициентом заполнения '
+                                f' **{max_mohtn_coef}**')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_coef_fill)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета коэффициента заполнения.xlsx')
+
+                # Коэффициент формы графика
+                check_shape_power = st.checkbox('Расчет коэффициента формы графика')
+                if check_shape_power:
+                    st.markdown('###### Коэффициент формы графика')
+                    st.write('Характеризует неравномерность график нагрузок. Для минимизации потерь электроэнергии '
+                             'в питающих, распределительных сетях и трансформаторах системы существующей системы '
+                             'электроснабжения коэффициент формы графика должен быть приближен к единице.')
+
+                    st.latex(r'''K_{ф.г} = \frac  {P_{ск}}  {P_{с}} ''')
+
+
+                    df_coef_shape_str = df_coef_shape.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_coef_shape_str)
+
+                    dfx = df_coef_shape_str.iloc[:, [0]]
+                    dfy_coef_fill = df_coef_shape_str.iloc[:, [1]]
+                    fig = mp.my_histogram(dfx, dfy_coef_fill)
+                    st.write(fig)
+
+                    max_coef_shape = round(df_coef_shape.iloc[:, 1].max(), 2)
+                    df_temp = df_coef_shape.loc[df_coef_shape.iloc[:, 1] == df_coef_shape.iloc[:, 1].max()]
+                    max_mohtn_shape= df_temp.iloc[:, 0].values[0]
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - наибольшее значение коэффициента заполнения в '
+                                f'исследуемом периоде: **{max_coef_shape}**')
+                    st.markdown(f'###### - месяц с наибольшим коэффициентом заполнения '
+                                f' **{max_mohtn_shape}**')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_coef_shape)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета коэффициента формы.xlsx')
+
+                # Коэффициент активной мощности
+                check_coefficient_fi = st.checkbox('Расчет коэффициента активной мощности')
+                if check_coefficient_fi:
+                    st.markdown('###### Коэффициент активной мощности')
+                    st.write('Коэффициент активной мощности – безразмерная физическая величина, '
+                             'характеризующая потребителя переменного электрического тока с точки зрения '
+                             'наличия в нагрузке реактивной составляющей.')
+
+                    st.latex(r'''\cos {\phi} = \frac  {P_{ср}}  {S_{ср}} ''')
+
+                    df_coef_fi_str = df_coef_fi.astype(str)
+                    st.write('Результаты расчета')
+                    st.write(df_coef_fi_str)
+
+                    dfx = df_coef_fi_str.iloc[:, [0]]
+                    dfy_coef_fi = df_coef_fi_str.iloc[:, [1]]
+                    fig = mp.my_histogram(dfx, dfy_coef_fi)
+                    st.write(fig)
+
+                    max_coef_fi = round(df_coef_fi.iloc[:, 1].max(), 3)
+                    min_coef_fi = round(df_coef_fi.iloc[:, 1].min(), 3)
+
+                    st.markdown('##### В результаты анализа данных установлено:')
+                    st.markdown(f'###### - наибольшее значение коэффициента мощности в '
+                                f'исследуемом периоде: **{max_coef_fi}**')
+                    st.markdown(f'###### - наименьшее значение коэффициента мощности в '
+                                f'исследуемом периоде: **{min_coef_fi}**')
+
+                    # Запись результатов в файл
+                    file_xlsx = write_to_excel(df_coef_fi)
+                    st.download_button(label='Сохранить результаты в xlsx файл',
+                                       data=file_xlsx,
+                                       file_name='Результаты расчета коэффициента мощности.xlsx')
+
+                # Запись всех результатов анализа графика в файл
+                file_xlsx = write_to_excel(df_mean, df_square, df_max, df_coef_max, df_coef_fill,
+                                           df_coef_shape, df_coef_fi)
+                st.download_button(label='Сохранить групповые результаты в xlsx файл',
+                                   data=file_xlsx,
+                                   file_name='Результаты расчета показателей ГЭН.xlsx')
+
+
 
 
 
