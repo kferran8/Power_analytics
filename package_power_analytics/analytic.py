@@ -6,6 +6,32 @@ import sys
 
 global_result = pd.DataFrame()
 
+
+# Функция для описательной статистики
+def describe_statistics(one_d_df):
+    """Входные данные Одномерный датафрейм"""
+    x = one_d_df.iloc[:,0]
+
+
+    data = [['Всего', x.count()],
+            ['Минимум', x.min()],
+            ['Минимальная позиция', x.idxmin()],
+            ['25% квантиль', round(x.quantile(.25))],
+            ['Медиана', round(x.median())],
+            ['75% квантиль', round(x.quantile(.75))],
+            ['Среднее', round(x.mean())],
+            ['Максимум', round(x.max())],
+            ['Индекс максимальнрого значения',  x.idxmax()],
+            ['Среднее абсолютное отклонение',  round(x.mad())],
+            ['Дисперсия', round(x.var())],
+            ['Среднеквадратичное отклонение', round(x.std())],
+            ['Асимметрия', round(x.skew())],
+            ['Эксцесс', round(x.kurt())]]
+
+    df_result = pd.DataFrame(data, columns=['Наименование статистики', f'Значение (\n{one_d_df.columns[0]})'])
+    return df_result
+
+
 class PowerGraphCoefficients:
 
     def __init__(self, df):
@@ -141,11 +167,15 @@ class PowerGraphCoefficients:
             pass
         else:
             self.calculation_square_power_of_month()
+        if self.df_mean_power is not None:
+            pass
+        else:
+            self.calculation_mean_power_of_month()
         df_square = self.df_square_power.set_index('Период наблюдений')
         df_mean = self.df_mean_power.set_index('Период наблюдений')
         coefficient_shape = pd.DataFrame()
         coefficient_shape['Коэффициент формы'] = round(df_square.iloc[:, 0] / df_mean.iloc[:, 0], 3)
-        coefficient_shape = coefficient_shape.reset_index(inplace=False)
+        coefficient_shape = coefficient_shape.reset_index(inplace=False).dropna()
         self.df_coefficient_shape = coefficient_shape
         return coefficient_shape
 
