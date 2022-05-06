@@ -38,8 +38,8 @@ def create_template_input_data(start_time, finish_time, df1=None, df2=None, df3=
         reactive_power = [random.randint(0, 200) for _ in range(len(date))]
         df1 = pd.DataFrame(
             {'Дата': date, 'Активная мощность, кВт': active_power, 'Реактивная мощность, кВАр': reactive_power})
-        file_name_df1 = 'Анализируемая статистика.xlsx'
-        df1.to_excel(file_name_df1, index=False, sheet_name='Исходная статистика')
+        # file_name_df1 = 'Анализируемая статистика.xlsx'
+        # df1.to_excel(file_name_df1, index=False, sheet_name='Исходная статистика')
 
         number_of_month = [i for i in range(1, 13, 1)]
         name_month = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',

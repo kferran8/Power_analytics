@@ -18,6 +18,8 @@ import numpy as np
 
 
 
+
+
 # Функция позволяющая сделать download на выгрузку данных расчета
 # list_data_frame
 @st.cache
@@ -321,7 +323,7 @@ def app():
                     st.write(df_coef_max_str)
 
                     dfx = df_coef_max_str.iloc[:, [0]]
-                    dfy_coef_max = df_coef_max_str.iloc[:, [1]]
+                    dfy_coef_max = df_coef_max.iloc[:, [1]]
                     fig = mp.my_histogram(dfx, dfy_coef_max)
                     st.write(fig)
 
@@ -344,7 +346,7 @@ def app():
                 # Коэффициент заполенния графика
                 check_coef_fill_power = st.checkbox('Расчет коэффициента заполнения графика')
                 if check_coef_fill_power:
-                    st.markdown('###### Коэффициент заполнения графика.')
+                    st.markdown('###### Коэффициент заполнения графика')
                     st.write('Характеризует неравномерность графика нагрузок. Для рациональной передачи электроэнергии, '
                                 'т.е. снижения к минимуму потерь в питающих и распределительных сетях предприятия, '
                                 'коэффициент заполнения графика должен быть приближен к единице, '
@@ -357,7 +359,7 @@ def app():
                     st.write(df_coef_fill_str)
 
                     dfx = df_coef_fill_str.iloc[:, [0]]
-                    dfy_coef_fill = df_coef_fill_str.iloc[:, [1]]
+                    dfy_coef_fill = df_coef_fill.iloc[:, [1]]
                     fig = mp.my_histogram(dfx, dfy_coef_fill)
                     st.write(fig)
 
@@ -394,7 +396,7 @@ def app():
                     st.write(df_coef_shape_str)
 
                     dfx = df_coef_shape_str.iloc[:, [0]]
-                    dfy_coef_fill = df_coef_shape_str.iloc[:, [1]]
+                    dfy_coef_fill = df_coef_shape.iloc[:, [1]]
                     fig = mp.my_histogram(dfx, dfy_coef_fill)
                     st.write(fig)
 
@@ -425,13 +427,18 @@ def app():
                     st.latex(r'''\cos {\phi} = \frac  {P_{ср}}  {S_{ср}} ''')
 
                     df_coef_fi_str = df_coef_fi.astype(str)
+
                     st.write('Результаты расчета')
                     st.write(df_coef_fi_str)
 
-                    dfx = df_coef_fi_str.iloc[:, [0]]
-                    dfy_coef_fi = df_coef_fi_str.iloc[:, [1]]
+                    dfx = df_coef_fi.iloc[:, [0]].astype(str)
+                    dfy_coef_fi = df_coef_fi.iloc[:, [1]].astype(float)
+
+                    st.write(str(dfy_coef_fi.dtypes))
+
                     fig = mp.my_histogram(dfx, dfy_coef_fi)
                     st.write(fig)
+
 
                     max_coef_fi = round(df_coef_fi.iloc[:, 1].max(), 3)
                     min_coef_fi = round(df_coef_fi.iloc[:, 1].min(), 3)
@@ -472,10 +479,6 @@ def app():
 
     except Exception as e:
         st.text(traceback.format_exc())
-
-
-
-
 
 
 if __name__ == '__main__':

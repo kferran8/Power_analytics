@@ -55,10 +55,23 @@ def my_histogram(dfx, *args):
                       # xaxis_title=xaxis_title,
                       # yaxis_title=yaxis_title,
                       margin=dict(l=0, r=40, t=0, b=0),
-                      # autosize = True,
-                      # height=600,
+                      autosize = True,
+                      height=600,
                       # width=1000
                       )
+
+    fig.update_yaxes(range=[min_yaxes_scale, max_yaxes_scale])
+
+    return fig
+
+
+def my_histogram_test(dfx, dfy):
+
+    x = dfx.iloc[:, 0]
+    y = dfy.iloc[:, 0]
+    fig = go.Figure(data=[go.Bar(x=x, y=y)])
+    max_yaxes_scale = 1.02*max(y)
+    min_yaxes_scale = 0.95*min(y)
 
     fig.update_yaxes(range=[min_yaxes_scale, max_yaxes_scale])
 
