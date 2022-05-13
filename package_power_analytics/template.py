@@ -28,23 +28,35 @@ def edit_style(writer):
 
 
 #Создание шаблона Эксель файла для ввода исходных данных
-def create_template_input_data(start_time, finish_time, df1=None, df2=None, df3=None):
+def create_template_input_data(start_time, finish_time, type_stat=0, df1=None, df2=None, df3=None):
 
     if df1 is None:
 
         date = pd.date_range(start=f'{start_time.year}-{start_time.month}-{start_time.day}',
                              end=f'{finish_time.year}-{finish_time.month}-{finish_time.day}', freq='30min')[:-1]
+
         active_power = [random.randint(0, 200) for _ in range(len(date))]
         reactive_power = [random.randint(0, 200) for _ in range(len(date))]
-        df1 = pd.DataFrame(
-            {'Дата': date, 'Активная мощность, кВт': active_power, 'Реактивная мощность, кВАр': reactive_power})
+
+        if type_stat == 0:
+            df1 = pd.DataFrame(
+                {'Дата': date, 'Активная энергия (А+), кВтч': active_power,
+                 'Реактивная энергия (R+), кВАрч': reactive_power})
+        else:
+            df1 = pd.DataFrame(
+                {'Дата': date, 'Активная мощность, кВт': active_power, 'Реактивная мощность, кВАр': reactive_power})
+
+
         # file_name_df1 = 'Анализируемая статистика.xlsx'
         # df1.to_excel(file_name_df1, index=False, sheet_name='Исходная статистика')
 
         number_of_month = [i for i in range(1, 13, 1)]
         name_month = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь',
                       'Ноябрь', 'Декабрь']
-        declared_power = ['' for _ in range(len(name_month))]
+
+        max_declared = max(active_power)*1.2
+
+        declared_power = [max_declared for _ in range(len(name_month))]
         df2 = pd.DataFrame(
             {'Номер месяца': number_of_month, 'Месяц': name_month, 'Заявленная мощность, кВт': declared_power})
 

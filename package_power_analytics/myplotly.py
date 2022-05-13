@@ -24,7 +24,7 @@ def myplotly(dfx, *args, rolling=True, window_rolling=336):
                           legend=dict(x=.5, xanchor="center"),
                           xaxis_title=dfx.columns[0],
                           yaxis_title=y.columns[0],
-                          margin=dict(l=0, r=40, t=0, b=0),
+                          margin=dict(l=0, r=0, t=0, b=0),
                           # autosize = True,
                           # height=600,
                           # width=1000
@@ -32,7 +32,8 @@ def myplotly(dfx, *args, rolling=True, window_rolling=336):
     return fig
 
 
-def my_histogram(dfx, *args):
+
+def my_histogram(dfx, *args, y_scale_min=0.9, y_scale_max=1.02):
     tminlst, tmaxlst = [], []
     fig = go.Figure()
     for y in args:
@@ -45,10 +46,8 @@ def my_histogram(dfx, *args):
         tminlst.append(float(ser_y.min()))
         tmaxlst.append(float(ser_y.max()))
 
-
-
-    max_yaxes_scale = 1.02*max(tmaxlst)
-    min_yaxes_scale = 0.95*min(tminlst)
+    max_yaxes_scale = y_scale_max*max(tmaxlst)
+    min_yaxes_scale = y_scale_min*min(tminlst)
 
     fig.update_layout(legend_orientation="h",
                       legend=dict(x=.5, xanchor="center"),
@@ -65,14 +64,17 @@ def my_histogram(dfx, *args):
     return fig
 
 
-def my_histogram_test(dfx, dfy):
-
-    x = dfx.iloc[:, 0]
-    y = dfy.iloc[:, 0]
-    fig = go.Figure(data=[go.Bar(x=x, y=y)])
-    max_yaxes_scale = 1.02*max(y)
-    min_yaxes_scale = 0.95*min(y)
-
-    fig.update_yaxes(range=[min_yaxes_scale, max_yaxes_scale])
+def my_pie(list_values, list_labels):
+    fig = go.Figure()
+    fig.add_trace(go.Pie(values=list_values, labels=list_labels, sort = False))
+    fig.update_layout(legend_orientation="h",
+                      legend=dict(x=.5, xanchor="center"),
+                      # xaxis_title=xaxis_title,
+                      # yaxis_title=yaxis_title,
+                      # margin=dict(l=0, r=40, t=0, b=0),
+                      autosize=True,
+                      height=600,
+                      # width=1000
+                      )
 
     return fig

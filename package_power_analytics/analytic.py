@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import sys
+from io import BytesIO
 
 
 
@@ -202,9 +203,8 @@ class PowerGraphCoefficients:
         self.df_coefficient_fi = coefficient_fi.dropna()
         return coefficient_fi.dropna()
 
-    def write_to_exel(self, name_file='Показатели нагрузки'):
+    def write_to_exel_buffer(self):
 
-        self.df.to_excel(f'Result_Excel/{name_file}.xlsx', sheet_name='Исходные данные', index=False)
         if self.df_mean_power is not None:
             pass
         else:
@@ -234,7 +234,8 @@ class PowerGraphCoefficients:
         else:
             self.coefficient_fi()
 
-        with pd.ExcelWriter(f'Result_Excel/{name_file}.xlsx', mode='a') as writer:
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
             self.df_mean_power.to_excel(writer, sheet_name='Средняя мощность', index=False)
             self.df_square_power.to_excel(writer, sheet_name='Среднеквадратичная мощность', index=False)
             self.df_max_power.to_excel(writer, sheet_name='Максимальная мощность', index=False)
@@ -242,6 +243,8 @@ class PowerGraphCoefficients:
             self.df_coefficient_fill.to_excel(writer, sheet_name='Коэф. заполнения', index=False)
             self.df_coefficient_shape.to_excel(writer, sheet_name='Коэф. формы', index=False)
             self.df_coefficient_fi.to_excel(writer, sheet_name='Косинус фи', index=False)
+        processed_data = buffer.getvalue()
+        return processed_data
 
 
 class DTariff(PowerGraphCoefficients):
@@ -437,16 +440,13 @@ class DTariff(PowerGraphCoefficients):
         pay_energy_month['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
             pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
             pay_energy_month['Расход электроэнергии, кВтч']
+
         self.df_pay_energy_month = pay_energy_month
-
-
-
         self.sum_pay_power = float(round(self.df_pay_energy_month.iloc[:, [4]].sum()))
         self.sum_pay_energy = float(round(self.df_pay_energy_month.iloc[:, [7]].sum()))
         self.sum_pay_power_and_energy = float(round(self.df_pay_energy_month.iloc[:, [8]].sum()))
 
-    def write_to_exel(self, name_file='Расчет оплаты Д-тарифа с фактической мощностью.xlsx'):
-        self.df.to_excel(f'Result_Excel/{name_file}.xlsx', sheet_name='Исходные данные', index=False)
+    def write_to_exel(self):
 
         if self.df_pay_energy_day is not None:
             pass
@@ -457,13 +457,16 @@ class DTariff(PowerGraphCoefficients):
         else:
             self.calculation()
 
-        with pd.ExcelWriter(f'Result_Excel/{name_file}.xlsx', engine='openpyxl', mode='a') as writer:
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
             self.energy_analyzer_day().reset_index().to_excel(writer, sheet_name='Расход ЭЭ (день).xlsx', index=False)
             self.energy_analyzer_month().reset_index().to_excel(writer, sheet_name='Расход ЭЭ (месяц).xlsx', index=False)
             self.power_analyzer_day().reset_index().to_excel(writer, sheet_name='Макс акт мощности (день).xlsx', index=False)
             self.power_analyzer_month().reset_index().to_excel(writer, sheet_name='Макс акт мощности (месяц).xlsx', index=False)
             self.df_pay_energy_day.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по суткам.xlsx', index=False)
             self.df_pay_energy_month.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по месяцам.xlsx', index=False)
+        processed_data = buffer.getvalue()
+        return processed_data
 
 
 class PowerLimits(PowerGraphCoefficients):
@@ -650,17 +653,15 @@ class DTariffDeclared(DTariff, PowerLimits):
                        'Суммарная оплата за электроэнергию и мощность, руб': 'sum',
                        })
         pay_energy_month['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
-            pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
-            pay_energy_month['Расход электроэнергии, кВтч']
+            round(pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
+            pay_energy_month['Расход электроэнергии, кВтч'],4)
         self.df_pay_energy_month = pay_energy_month
         self.sum_pay_power = float(round(self.df_pay_energy_month.iloc[:, [4]].sum()))
         self.sum_pay_energy = float(round(self.df_pay_energy_month.iloc[:, [7]].sum()))
         self.sum_pay_power_and_energy = float(round(self.df_pay_energy_month.iloc[:, [8]].sum()))
 
 
-    def write_to_exel(self, name_file='Расчет оплаты Д-тарифа с заявленной мощностью.xlsx'):
-        self.df.to_excel(f'Result_Excel/{name_file}.xlsx', sheet_name='Исходные данные', index=False)
-
+    def write_to_exel_buffer(self):
         if self.df_pay_energy_month is not None:
             pass
         else:
@@ -670,13 +671,16 @@ class DTariffDeclared(DTariff, PowerLimits):
         else:
             self.calculation()
 
-        with pd.ExcelWriter(f'Result_Excel/{name_file}.xlsx', engine='openpyxl', mode='a') as writer:
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
             self.energy_analyzer_day().reset_index().to_excel(writer, sheet_name='Расход ЭЭ (день).xlsx', index=False)
             self.energy_analyzer_month().reset_index().to_excel(writer, sheet_name='Расход ЭЭ (месяц).xlsx', index=False)
             self.power_analyzer_day().reset_index().to_excel(writer, sheet_name='Макс акт мощности (день).xlsx', index=False)
             self.power_analyzer_month().reset_index().to_excel(writer, sheet_name='Макс акт мощности (месяц).xlsx', index=False)
             self.df_pay_energy_month.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по месяцам.xlsx', index=False)
             self.df_pay_energy_day.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по суткам.xlsx', index=False)
+        processed_data = buffer.getvalue()
+        return processed_data
 
 
 class DifferTariff(DTariff, PowerLimits):
@@ -1046,9 +1050,7 @@ class DifferTariff(DTariff, PowerLimits):
         self.sum_pay_power_and_energy = float(round(self.df_pay_energy_month.iloc[:, [18]].sum()))
 
 
-    def write_to_exel(self, name_file='Расчет оплаты ДД-тарифа'):
-
-        self.df.to_excel(f'Result_Excel/{name_file}.xlsx', sheet_name='Исходные данные', index=False)
+    def write_to_exel_buffer(self):
 
         if self.df_pay_energy_day is not None:
             pass
@@ -1058,8 +1060,8 @@ class DifferTariff(DTariff, PowerLimits):
             pass
         else:
             self.calculation()
-
-        with pd.ExcelWriter(f'Result_Excel/{name_file}.xlsx', mode='a') as writer:
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
             self.dd_power_analyzer_day().reset_index().to_excel(writer, sheet_name='Сравнение утр и веч пика.xlsx',
                                                                     index=False)
             self.dd_power_analyzer_month().reset_index().to_excel(writer, sheet_name='Мес сравн пиков.xlsx',
@@ -1067,6 +1069,8 @@ class DifferTariff(DTariff, PowerLimits):
             self.df_pay_energy_day.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по суткам.xlsx', index=False)
             self.df_pay_energy_month.reset_index().to_excel(writer, sheet_name='Плата за ЭЭ по месяцам.xlsx',
                                                             index=False)
+        processed_data = buffer.getvalue()
+        return processed_data
 
 
 class CompareOfTariffs():
