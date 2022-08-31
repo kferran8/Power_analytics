@@ -257,12 +257,17 @@ class DTariff(PowerGraphCoefficients):
     :param kb: базовый курс доллара
     """
 
-    def __init__(self, df, ab, bb, kt, kb):
+    def __init__(self, df, ab, bb, kt, kb, time_start_morning =  8.5, time_finish_morning = 11,
+                 time_start_evening = 18.5, time_finish_evening = 21):
         super().__init__(df)
         self.ab = ab
         self.bb = bb
         self.kt = kt
         self.kb = kb
+        self.time_start_morning = time_start_morning
+        self.time_finish_morning = time_finish_morning
+        self.time_start_evening = time_start_evening
+        self.time_finish_evening = time_finish_evening
         self.df_pay_energy_month = None
         self.df_pay_energy_day = None
         self.sum_pay_power = None
@@ -291,20 +296,22 @@ class DTariff(PowerGraphCoefficients):
         # Максимальная мощность в только в часы максимума (по этой мощности оплата)
         x = df['Час']
         # Максимально-вероятностный период в часы утреннего максимума
-        df_full_in_morning_day = df[((x >= 8.5) & (x <= 11.0))]
+        df_full_in_morning_day = df[((x >= self.time_start_morning) & (x <= self.time_finish_morning))]
         df_max_power_in_morning_day = df_full_in_morning_day.groupby(['Период наблюдений', 'День']). \
             aggregate({'Активная мощность, кВт': 'max'})
         df_max_power_in_morning_day = df_max_power_in_morning_day. \
             rename(columns={'Активная мощность, кВт': 'Максимум активной мощности в часы утреннего максимума '
                                                       'энергосистемы , кВт'})
         # Максимально-вероятностный период в часы вечернего максимума
-        df_full_in_evening_day = df[((x >= 18.5) & (x <= 21.0))]
+        df_full_in_evening_day = df[((x >= self.time_start_evening) & (x <= self.time_finish_evening))]
         df_max_power_in_evening_day = df_full_in_evening_day.groupby(['Период наблюдений', 'День']). \
             aggregate({'Активная мощность, кВт': 'max'})
         df_max_power_in_evening_day = df_max_power_in_evening_day. \
             rename(columns={'Активная мощность, кВт': 'Максимум активной мощности в часы вечернего максимума '
                                                       'энергосистемы , кВт'})
-        df_full_in_hour_energy_day = df[((x >= 8.5) & (x <= 11.0)) | (x >= 18.5) & (x <= 21.0)]
+        df_full_in_hour_energy_day = df[((x >= self.time_start_morning) & (x <= self.time_finish_morning)) |
+                                        (x >= self.time_start_evening) & (x <= self.time_finish_evening)]
+
         df_full_in_hour_energy_day = df_full_in_hour_energy_day.groupby(['Период наблюдений', 'День']). \
             aggregate({'Активная мощность, кВт': 'max'})
         df_full_in_hour_energy_day = df_full_in_hour_energy_day. \
@@ -415,8 +422,8 @@ class DTariff(PowerGraphCoefficients):
                                                                                    'Оплата за электрическую энергию, ' \
                                                                                    'руб']
         pay_energy_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] \
-            = pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
-              pay_energy_day['Расход электроэнергии, кВтч']
+            = round(pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
+              pay_energy_day['Расход электроэнергии, кВтч'],4)
 
         self.mean_tariff = round(pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'].sum() / \
                                  pay_energy_day['Расход электроэнергии, кВтч'].sum(), 4)
@@ -438,15 +445,15 @@ class DTariff(PowerGraphCoefficients):
                        'Суммарная оплата за электроэнергию и мощность, руб': 'sum',
                        })
         pay_energy_month['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
-            pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
-            pay_energy_month['Расход электроэнергии, кВтч']
+           round( pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
+            pay_energy_month['Расход электроэнергии, кВтч'],4)
 
         self.df_pay_energy_month = pay_energy_month
         self.sum_pay_power = float(round(self.df_pay_energy_month.iloc[:, [4]].sum()))
         self.sum_pay_energy = float(round(self.df_pay_energy_month.iloc[:, [7]].sum()))
         self.sum_pay_power_and_energy = float(round(self.df_pay_energy_month.iloc[:, [8]].sum()))
 
-    def write_to_exel(self):
+    def write_to_exel_buffer(self):
 
         if self.df_pay_energy_day is not None:
             pass
@@ -471,8 +478,13 @@ class DTariff(PowerGraphCoefficients):
 
 class PowerLimits(PowerGraphCoefficients):
 
-    def __init__(self, df):
+    def __init__(self, df, time_start_morning =  8.5, time_finish_morning = 11,
+                 time_start_evening = 18.5, time_finish_evening = 21):
         super().__init__(df)
+        self.time_start_morning = time_start_morning
+        self.time_finish_morning = time_finish_morning
+        self.time_start_evening = time_start_evening
+        self.time_finish_evening = time_finish_evening
         self.df_full_limit = None
         self.df_only_max_period = None
         self.df_max_month_value = None
@@ -539,7 +551,8 @@ class PowerLimits(PowerGraphCoefficients):
         x = self.df_full_limit['Час']
         #
         # Максимально-вероятностный период в часы максимума
-        self.df_only_max_period = self.df_full_limit[((x >= 8.5) & (x <= 11.0)) | (x >= 18.5) & (x <= 21.0)]
+        self.df_only_max_period = self.df_full_limit[((x >= self.time_start_morning) & (x <= self.time_finish_morning))
+                                                     | (x >= self.time_start_evening) & (x <= self.time_finish_evening)]
 
         # Только максимально-вероятностное значения в часы максимума
         self.df_max_month_value = self.df_only_max_period.groupby('Период наблюдений'). \
@@ -552,14 +565,20 @@ class PowerLimits(PowerGraphCoefficients):
 
         return self.df_full_limit
 
-    def write_to_exel(self, name_file='Расчет лимитов мощности'):
+    def write_to_exel_buffer(self):
 
         if self.df_only_max_period is not None:
             pass
         else:
             self.power_limits()
 
-        self.df_only_max_period.to_excel(f'Result_Excel/{name_file}.xlsx', index=False)
+
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            self.df_only_max_period.to_excel(writer, sheet_name='Часовая оценка лимитов', index=False)
+            self.df_max_month_value.to_excel(writer, sheet_name='Ожидаемые лимиты', index=False)
+        processed_data = buffer.getvalue()
+        return processed_data
 
 
 class DTariffDeclared(DTariff, PowerLimits):
@@ -630,8 +649,8 @@ class DTariffDeclared(DTariff, PowerLimits):
                                                                                    'Оплата за электрическую энергию, ' \
                                                                                    'руб']
         pay_energy_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] \
-            = pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
-              pay_energy_day['Расход электроэнергии, кВтч']
+            = round(pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
+              pay_energy_day['Расход электроэнергии, кВтч'],4)
 
         self.mean_tariff = round(pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'].sum() / \
                                  pay_energy_day['Расход электроэнергии, кВтч'].sum(), 4)
@@ -981,8 +1000,8 @@ class DifferTariff(DTariff, PowerLimits):
             round(df_day['Оплата за электрическую мощность, руб'] + df_day['Оплата за электроэнергию, руб'])
 
         df_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
-            df_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
-            df_day['Суммарный расход электроэнергии, кВтч']
+           round( df_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
+            df_day['Суммарный расход электроэнергии, кВтч'],4)
 
         self.mean_tariff = round(df_day['Суммарная оплата за электроэнергию и мощность, руб'].sum() / \
                                  df_day['Суммарный расход электроэнергии, кВтч'].sum(), 4)
@@ -1038,8 +1057,8 @@ class DifferTariff(DTariff, PowerLimits):
              })
 
         df_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
-            df_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
-            df_day['Суммарный расход электроэнергии, кВтч']
+           round( df_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
+            df_day['Суммарный расход электроэнергии, кВтч'], 4)
 
         self.df_pay_energy_month = df_month
         self.sum_pay_power = float(round(self.df_pay_energy_month.iloc[:, [13]].sum()))
