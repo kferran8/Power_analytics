@@ -39,7 +39,9 @@ class PowerGraphCoefficients:
         """
         :param df: Исходный DataFrame с тремя колонками: время, активная и реактивная мощность
         """
-        self.df = round(df.fillna(0), 2)
+        self.df = self._timedelta(df)
+
+
         self.df_rename = self._add_period(self._rename(self.df).set_index('Период наблюдений'))
         self.count_day = round(len(self.df_rename.index) / 48)
         self.df_coef_fi_day = None
@@ -50,6 +52,12 @@ class PowerGraphCoefficients:
         self.df_coefficient_fill = None
         self.df_coefficient_shape = None
         self.df_coefficient_fi = None
+
+    def _timedelta(self, df):
+        df = round(df.fillna(0), 2)
+        _df = df.iloc[:, 0] - pd.Timedelta(seconds=1)
+        merge = pd.concat([_df, df.iloc[:, [1, 2]]], axis=1)
+        return merge
 
     def _rename(self, df):
         """Переименовывает колонки датафрейма в более удобный вид"""

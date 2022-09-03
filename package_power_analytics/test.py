@@ -1,6 +1,6 @@
 import package_power_analytics.analytic as an
 import pandas as pd
-import main
+# import main
 import sqlite3
 
 
@@ -27,47 +27,16 @@ bb = float(df_initial_data.iloc[5, 1])
 # d_tariff_declared = an.DTariffDeclared(df=df1, ab=ab, bb=bb, kt=kt, kb=kb, declared=df3)
 # d_tariff_declared.calculation()
 # d_tariff_decl_for_table = d_tariff_declared.df_pay_energy_month.reset_index()
-power_coefficients = an.PowerGraphCoefficients(df=df_power_statistics)
+# power_coefficients = an.PowerGraphCoefficients(df=df_power_statistics)
+
 # df_mean = power_coefficients.calculation_mean_power_of_month()
-df_square = power_coefficients.calculation_square_power_of_month()
-print(df_square)
+# df_square = power_coefficients.calculation_square_power_of_month()
 
+# print(power_coefficients.df)
 
+df_ = df1.iloc[:,0]-pd.Timedelta(seconds=1)
+df__ = df1.iloc[:,[1,2]]
+merge = pd.concat([df_, df__], axis=1)
 
+print(merge)
 
-
-# conn = sqlite3.connect('data.db')
-# c = conn.cursor()
-#
-# def create_user_table():
-#     c.execute('CREATE TABLE IF NOT EXISTS usertable(username TEXT, password TEXT)')
-#
-# def add_user_data(username, password):
-#     c.execute('INSERT INTO usertable(username, password) VALUES (?, ?)', (username, password))
-#
-# def login_user(username, password):
-#     c.execute('SELECT * FROM usertable WHERE username =? and password=?', (username, password))
-#     data=c.fetchall()
-#     return data
-#
-# def view_all_user():
-#     c.execute('SELECT * FROM usertable')
-#     df = pd.read_sql("SELECT * FROM usertable ", conn)
-#     return df
-#
-# create_user_table()
-#
-# for i in range(10,20,1):
-#     print(i)
-#     add_user_data(username=i, password=1111)
-#
-# df = pd.read_sql("SELECT * FROM usertable ", conn)
-# print(df)
-#
-# def check_user(username, password):
-#     c.execute('SELECT * FROM usertable WHERE username =? and password=?', (username, password))
-#     data=c.fetchall()
-#     if data is None:
-#         return 0
-#     else:
-#         return 1
