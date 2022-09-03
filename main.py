@@ -899,7 +899,7 @@ def app(mode='not_demo'):
 
 
 def app_authorization():
-    st.title('Калькулятор оптимального тарифа электроэнергии')
+    st.title('Калькулятор тарифов')
     st.info('Определение оптимального тарифа оплаты за электроэнергию  '
             'позволяет экономить от 5 до 20 % от стоимости ресурсов ежегодно.')
 
@@ -913,7 +913,7 @@ def app_authorization():
         password = st.sidebar.text_input('Пароль', type="password")
 
 
-        if user_name == '1' and password == '1':
+        if user_name == 'root' and password == '123':
             st.sidebar.success('Вы вошли под учетной записью администратора')
             with st.expander('ВВОД НОВЫХ ПОЛЬЗОВАТЕЛЕЙ'):
                 st.markdown('##### Добавление нового пользователя в базу данных')
