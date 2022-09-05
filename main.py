@@ -20,8 +20,6 @@ import sqlite3
 # https://www.analyticsvidhya.com/blog/2021/06/deploy-your-ml-dl-streamlit-application-on-heroku/
 
 
-
-
 # Функция позволяющая сделать download на выгрузку данных расчета
 # list_data_frame
 @st.cache

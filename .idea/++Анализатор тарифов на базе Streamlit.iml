@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/package_power_analytics" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (Cluster streamlit)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.10 (++Анализатор тарифов на базе Streamlit) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

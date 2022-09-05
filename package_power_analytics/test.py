@@ -4,7 +4,7 @@ import pandas as pd
 import sqlite3
 
 
-xls = pd.ExcelFile('Исходные данные Водоканал.xlsx')
+xls = pd.ExcelFile('Тестовые данные.xlsx')
 df_initial_data = xls.parse('Исх данные')
 df_declared = xls.parse('Заявл мощность')
 df_power_statistics = xls.parse('Получасовая статистика')

@@ -40,8 +40,6 @@ class PowerGraphCoefficients:
         :param df: Исходный DataFrame с тремя колонками: время, активная и реактивная мощность
         """
         self.df = self._timedelta(df)
-
-
         self.df_rename = self._add_period(self._rename(self.df).set_index('Период наблюдений'))
         self.count_day = round(len(self.df_rename.index) / 48)
         self.df_coef_fi_day = None
@@ -364,12 +362,12 @@ class DTariff(PowerGraphCoefficients):
         df['Период наблюдений'] = df['Период наблюдений'].dt.to_period('M')
         df['Количество дней в месяце'] = df['Период наблюдений'].apply(lambda x: x.day)
         # Расход элекроэнергии
-        df['Расход электроэнергии, кВтч'] = df['Активная мощность, кВт'].apply(lambda x: round(0.5 * x, 0))
+        df['Расход электроэнергии, кВтч'] = df['Активная мощность, кВт'].apply(lambda x: round(0.5 * x, 1))
         df_energy_day = df.groupby(['Период наблюдений', 'День']). \
             aggregate({'Активная мощность, кВт': 'count', 'День': 'count', 'Количество дней в месяце': 'mean',
                        'Расход электроэнергии, кВтч': 'sum'})
 
-        df_energy_day['День'] = df_energy_day['День'].apply(lambda x: round(x / (48)))
+        df_energy_day['День'] = df_energy_day['День'].apply(lambda x: round(x / (48),1))
         df_energy_day = df_energy_day.rename(columns={'Активная мощность, кВт':
                                                           'Количество значений 30-и минутной '
                                                           'мощности попавших в диапазон',
@@ -418,12 +416,12 @@ class DTariff(PowerGraphCoefficients):
         pay_energy_day['Оплата за электрическую мощность, руб'] = round(
             pay_energy_day['Тариф на электрическую мощность, руб/кВт'] * \
             pay_energy_day['Максимум активной мощности в месяце в часы максимума энергосистемы, кВт'] / pay_energy_day[
-                'Количество дней в месяце'])
+                'Количество дней в месяце'],2)
 
         pay_energy_day['Оплата за электрическую энергию, руб'] = round(pay_energy_day[
                                                                            'Тариф на электрическую энергию, руб/кВтч'] * \
                                                                        pay_energy_day[
-                                                                           'Расход электроэнергии, кВтч'])
+                                                                           'Расход электроэнергии, кВтч'],2)
         pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] = pay_energy_day['Оплата за электрическую ' \
                                                                                               'мощность, руб'] + \
                                                                                pay_energy_day[
@@ -445,10 +443,10 @@ class DTariff(PowerGraphCoefficients):
                        'Количество дней в месяце': 'mean',
                        'Максимум активной мощности в месяце в часы максимума энергосистемы, кВт':
                            lambda x: np.round(np.mean(x), 2),
-                       'Тариф на электрическую мощность, руб/кВт': lambda x: np.round(np.mean(x), 4),
+                       'Тариф на электрическую мощность, руб/кВт': lambda x: np.round(np.mean(x), 5),
                        'Оплата за электрическую мощность, руб': 'sum',
                        'Расход электроэнергии, кВтч': 'sum',
-                       'Тариф на электрическую энергию, руб/кВтч': lambda x: np.round(np.mean(x), 4),
+                       'Тариф на электрическую энергию, руб/кВтч': lambda x: np.round(np.mean(x), 5),
                        'Оплата за электрическую энергию, руб': 'sum',
                        'Суммарная оплата за электроэнергию и мощность, руб': 'sum',
                        })
