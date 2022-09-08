@@ -12,6 +12,8 @@ from io import BytesIO
 import base64
 import numpy as np
 import sqlite3
+
+
 # import sweetviz as sv
 # from pandas_profiling import ProfileReport
 
@@ -33,11 +35,12 @@ def get_table_download_link(*args):
     return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="Result_cluster.xlsx">' \
            f'Скачать xlsx файл результата</a>'  # decode b'abc' => abc
 
+
 def list_times(hour_start=0, hour_finish=24, minute_delta=30):
     count = (hour_finish - hour_start) * 60
-    res = [(datetime.datetime.combine(datetime.date.today(), datetime.time(hour=hour_start,minute=0)) +
+    res = [(datetime.datetime.combine(datetime.date.today(), datetime.time(hour=hour_start, minute=0)) +
             datetime.timedelta(minutes=i)).time().strftime("%H:%M")
-           for i in range(0, count , minute_delta)]
+           for i in range(0, count, minute_delta)]
     return res
 
 
@@ -60,7 +63,6 @@ def app(mode='not_demo'):
             type_stat = 0
         else:
             type_stat = 1
-
 
         file_xlsx = create_template_input_data(start_time, finish_time, type_stat=type_stat)
         st.sidebar.download_button(label='Сгенерировать шаблон для ввода данных Excel-файла',
@@ -182,8 +184,7 @@ def app(mode='not_demo'):
             ['Исходные данные', 'Описательная статистика', 'Часовые графики нагрузок'],
             [])
 
-
-        if len(options_multiselect) !=0:
+        if len(options_multiselect) != 0:
             st.subheader('Первичный анализ исходных статистических данных')
 
         if 'Исходные данные' in options_multiselect:
@@ -387,7 +388,6 @@ def app(mode='not_demo'):
             if check_cof_max_power:
                 st.subheader('Коэффициент максимума графика нагрузок')
 
-
                 st.latex(r'''K_{м.г} = \frac  {P_м}  {P_{ср}} ''')
 
                 df_coef_max_str = df_coef_max.astype(str)
@@ -570,7 +570,6 @@ def app(mode='not_demo'):
                                               options=list_t, index=12), '%H:%M')
             time_finish_evening = select_dtm_finish.hour + select_dtm_finish.minute / 60
 
-
         agree_limit = st.sidebar.checkbox('Расчет лимитов мощности')
         if agree_limit:
             st.subheader('Определение математически ожидаемых и максимальных значений получасовой мощности ')
@@ -603,7 +602,7 @@ def app(mode='not_demo'):
             drop_list = ['Год', 'Месяц', 'Час', 'Часы суток',
                          'Минимальная активная мощность, кВт',
                          'Среднеквадратическое отклонение активной мощности, кВт',
-                         'Количество значений', 'Период наблюдений' ]
+                         'Количество значений', 'Период наблюдений']
             df_full_limit = df_full_limit.drop(drop_list, axis=1)
 
             st.line_chart(data=df_full_limit, width=0, height=0, use_container_width=True)
@@ -616,7 +615,7 @@ def app(mode='not_demo'):
             st.markdown('##### Диаграмма прогнозируемых лимитов мощности следующего за анализируемым периодом')
             df_max_month_value = power_limits.df_max_month_value
             dfx = df_max_month_value.iloc[:, [0]].astype(str)
-            dfy_1= df_max_month_value.iloc[:, [1]].astype(float)
+            dfy_1 = df_max_month_value.iloc[:, [1]].astype(float)
             dfy_2 = df_max_month_value.iloc[:, [2]].astype(float)
             fig = mp.my_histogram(dfx, dfy_1, dfy_2, )
             st.write(fig)
@@ -630,8 +629,6 @@ def app(mode='not_demo'):
             st.write('_________________________')
 
         st.sidebar.write('____')
-
-
 
         st.sidebar.markdown('#### Анализ стоимости электроэнергии')
         check_analysis_tariff = st.sidebar.checkbox('Расчет стоимости электроэнергии')
@@ -659,14 +656,6 @@ def app(mode='not_demo'):
                 d_tariff = an.DTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
                 d_tariff_declared = an.DTariffDeclared(df=df1, ab=ab, bb=bb, kt=kt, kb=kb, declared=df3)
 
-
-
-
-            # dif_tariff = analytic.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
-            # dif_tariff_reg = analytic.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
-
-
-
             check_declared = st.checkbox('Двухставочный тариф за с оплатой за заявленную мощность')
             if check_declared:
                 st.subheader('Двухставочный тариф с оплатой за заявленную (договорную) мощность')
@@ -689,8 +678,8 @@ def app(mode='not_demo'):
 
                 st.write('_________________________')
 
-                st.markdown('##### Результаты расчета оплаты за электроэнергию при оплате по двухставочному '
-                            'тарифу с заявленной мощностью')
+                st.markdown('##### Результаты расчета оплаты за электроэнергию по двухставочному '
+                            'тарифу с оплатой за заявленную мощностью')
                 d_tariff_declared.calculation()
                 d_tariff_decl_for_table = d_tariff_declared.df_pay_energy_month.reset_index()
 
@@ -706,7 +695,6 @@ def app(mode='not_demo'):
                 sum_pay_energy = d_tariff_declared.sum_pay_energy
                 # процент оплаты за мощность в суммарной оплате
                 dec_per = round(sum_pay_power / sum_pay_power_and_energy * 100, 1)
-
 
                 st.write('_________________________')
 
@@ -749,6 +737,8 @@ def app(mode='not_demo'):
 
                 st.write('_________________________')
 
+            # ______________________#АНАЛИЗ ДВУХСТАВОЧНОГО ТАРИФА С ФАКТИЧЕСКОЙ МОЩНОСТЬЮ#______________________#___________________#
+
             check_d_tariff = st.checkbox('Двухставочный тариф за с оплатой за фактическую мощность')
             if check_d_tariff:
                 st.subheader('Двухставочный тариф с оплатой за фактическую мощность')
@@ -790,8 +780,9 @@ def app(mode='not_demo'):
                                   f'максимальная нагрузка находится в границах максимума энергосистемы'
 
                 st.subheader(f'Заключение анализа максимумов нагрузок')
-                st.write(f'В результате оценки максимумов установлено, что {count_day_true} из {count_day} дней выходят '
-                         f'за границы максимумов энергосистемы, следовательно:')
+                st.write(
+                    f'В результате оценки максимумов установлено, что {count_day_true} из {count_day} дней выходят '
+                    f'за границы максимумов энергосистемы, следовательно:')
                 st.markdown(f'######  {conclusion1}.')
 
                 # Сравнение максимумов утро, вечер и максимум, котоырй наблюдался
@@ -802,7 +793,6 @@ def app(mode='not_demo'):
                 dfy_3 = power.iloc[:, [3]].astype(float)
                 fig = mp.my_histogram(dfx, dfy_1, dfy_2, dfy_3)
                 st.write(fig)
-
 
                 # Сравнение мощностей по суткам
                 st.markdown('##### Сравнение максимумов нагрузок по суткам')
@@ -821,8 +811,8 @@ def app(mode='not_demo'):
                 st.write(fig)
                 st.write('_________________________')
 
-                st.markdown('##### Результаты расчета оплаты за электроэнергию при оплате по двухставочному '
-                            'тарифу с заявленной мощностью')
+                st.markdown('##### Результаты расчета оплаты за электроэнергию по двухставочному '
+                            'тарифу с оплатой за фактическую мощность')
                 d_tariff.calculation()
                 pay_month = d_tariff.df_pay_energy_month.reset_index()
                 st.write(pay_month.astype(str))
@@ -879,21 +869,512 @@ def app(mode='not_demo'):
                                    file_name='Результаты анализа Д-тарифа с фактической мощностью.xlsx')
                 st.write('_________________________')
 
-            check_d_tariff = st.checkbox('Двухставочно-дифференцированный тариф без изменения режима работы предприятия')
+            # ______________________#АНАЛИЗ ДД-ТАРИФА БЕЗ РЕГУЛИРОВАНИЯ МОЩНОСТИ#______________________#___________________#
+
+            check_d_tariff = st.checkbox(
+                'Двухставочно-дифференцированный тариф без изменения режима работы предприятия')
             if check_d_tariff:
-              pass
+                st.subheader('Двухставочно-дифференцированного тарифа без изменения существующего '
+                             'режима работы производства')
+                st.write('Двухставочно-дифференцированный тариф с оплатой за фактическую мощность с основной ставкой '
+                         'а (руб/кВт) за 1 кВт и дополнительной ставкой b (руб/кВт∙ч) за 1 кВт∙ч '
+                         'с учетом корректирующих коэффициентов к основной и дополнительной ставкам по зонам суток '
+                         'определяется по формуле:')
+                st.latex(r'''П_{дд} = {a} \cdotp {k_{a}} \cdotp {P_{ф.max}} + {b} \cdotp ({{k_{н}\cdotp} {W_{н}}}+
+              {{k_{пп}\cdotp} {W_{пп}}} + {{k_{п}\cdotp} {W_{пп}}} )''')
+                st.write('_________________________')
+                st.markdown('##### Результаты расчета тарифных коэффициентов')
+                st.write('Тарифные коэффициенты зависят от продолжительности и границы тарифных зон суток '
+                         'для всех расчетных периодов (месяцев) календарного года являются едиными и устанавливаются:\n'
+                         '- ночная: tн = 7 ч (с 23:00 до 6:00); \n'
+                         '- полупиковая: tпп = 14 ч (с 6:00 до 8:00 и с 11:00 до 23:00); \n'
+                         '- пиковая: tп = 3 ч (с 8:00 до 11:00)')
+
+                dif_tariff = an.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
+                tariff_coefficients = dif_tariff.calculation_tariff_coefficients().reset_index()
+                st.write(tariff_coefficients.astype(str))
+                st.write('_________________________')
+
+                st.markdown('##### Результаты расчета затрат электроэнергии по тарифным зонам')
+                energy_analyzer_month = dif_tariff.dd_energy_analyzer_month().reset_index()
+                st.write(energy_analyzer_month.astype(str))
+                # Расход электроэнергии по зонам
+                wn = dif_tariff.sum_energy_night
+                wp = dif_tariff.sum_energy_peak
+                wpp = dif_tariff.sum_energy_half_peak
+                sum_energy = dif_tariff.sum_energy
+                st.metric(label="Суммарный расход электроэнергии в рассмотренном периоде", value=f'{sum_energy} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в ночной зоне", value=f'{wn} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в пиковой зоне", value=f'{wp} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в полупиковой зоне", value=f'{wpp} кВт∙ч.')
+
+                # Баланс распределения затрат ЭЭ по зонам тарифным
+                wn_per = round(wn / sum_energy * 100, 1)
+                wp_per = round(wp / sum_energy * 100, 1)
+                wpp_per = round(wpp / sum_energy * 100, 1)
+
+                st.markdown('##### Структура электропотребления по зонам суток')
+                st.write(f'В балансе электропотребления затраты электроэнергии в ночной зоне составляют {wn_per} %, '
+                         f'в полупиковой {wpp_per} % и пиковой {wp_per} % соответственно. ')
+
+                list_pay_dec = [wn_per, wp_per, wpp_per]
+                list_labels = ['Суммарный расход электроэнергии в ночной зоне',
+                               'Суммарный расход электроэнергии в пиковой зоне',
+                               'Суммарный расход электроэнергии в полупиковой зоне']
+                fig = mp.my_pie(list_values=list_pay_dec, list_labels=list_labels)
+                st.write(fig)
+
+                dfx = energy_analyzer_month.iloc[:, [0]].astype(str)
+                dfy_night_energy = energy_analyzer_month.iloc[:, [1]].astype(float)
+                dfy_half_peak_energy = energy_analyzer_month.iloc[:, [2]].astype(float)
+                dfy_peak_energy = energy_analyzer_month.iloc[:, [3]].astype(float)
+                dfy_full_energy = energy_analyzer_month.iloc[:, [4]].astype(float)
+
+                fig = mp.my_histogram(dfx, dfy_night_energy, dfy_half_peak_energy, dfy_peak_energy,
+                                      dfy_full_energy, y_scale_min=0)
+                st.markdown('##### Изменение электропотребления по зонам суток')
+                st.write(fig)
+
+                st.write('_________________________')
+                st.markdown('##### Результаты анализа максимумов нагрузок')
+                st.write('Результаты анализа количества дней, в которых часы вечернего максима нагрузок энергосистемы '
+                         'превышает утренний по расчетным периодам, а также средняя и максимальная мощность превышения '
+                         'за расчетный период ')
+                st.markdown('###### Результаты месячного анализа')
+                dd_power_analyzer_month = dif_tariff.dd_power_analyzer_month().reset_index()
+                st.write(dd_power_analyzer_month.astype(str))
+
+                st.markdown('###### Результаты суточного анализа')
+                power_analyzer_day = dif_tariff.dd_power_analyzer_day().reset_index()
+                st.write(power_analyzer_day.astype(str))
+                st.info('Индикатор в таблице соответствует: \n'
+                        'True - Наибольший утренний вечерний максимум больше утреннего; '
+                        'False - в обратном случае.')
+
+                count_temp = dd_power_analyzer_month.iloc[:, [6]]
+                count_tariff = (count_temp['Выполняется условие оплаты по ДД-тарифу?'] == 'Да').sum()
+                count_month = d_tariff.power_analyzer_month().reset_index()['Индикатор'].count()
+
+                st.metric(label="Исследовано месяцев:", value=f'{count_month} мес.')
+                st.metric(label="Количество месяцев, в которых выполняется условие дифференцирования "
+                                "оплаты за электроэнергию:", value=f'{count_tariff} мес.')
+
+                st.write('_________________________')
+                st.markdown('##### Результаты анализа оплаты за электроэнергию по двухставочно-дифференцированному '
+                            'тарифу')
+
+                dif_tariff.calculation()
+                sum_pay_energy = dif_tariff.sum_pay_energy
+                sum_pay_power = dif_tariff.sum_pay_power
+                sum_pay_power_and_energy = dif_tariff.sum_pay_power_and_energy
+
+                sum_energy_night = dif_tariff.sum_energy_night
+                sum_pay_energy_night = dif_tariff.sum_pay_energy_night
+
+                sum_energy_half_peak = dif_tariff.sum_energy_half_peak
+                sum_pay_energy_half_peak = dif_tariff.sum_pay_energy_half_peak
+
+                sum_energy_peak = dif_tariff.sum_energy_peak
+                sum_pay_energy_peak = dif_tariff.sum_pay_energy_peak
+
+                dec_per = round((sum_pay_power / sum_pay_power_and_energy * 100), 1)
+
+                dd_pay_energy_month = dif_tariff.df_pay_energy_month.reset_index().iloc[:, [0, 14, 15, 16, 17, 18, 19]]
+                st.write(dd_pay_energy_month.astype(str))
+
+                dfx = dd_pay_energy_month.iloc[:, [0]].astype(str)
+                dfy_sum_energy_night = dd_pay_energy_month.iloc[:, [2]].astype(float)
+                dfy_sum_pay_energy_peak = dd_pay_energy_month.iloc[:, [3]].astype(float)
+                dfy_sum_energy_half_peak = dd_pay_energy_month.iloc[:, [4]].astype(float)
+                dfy_sum_pay_power = dd_pay_energy_month.iloc[:, [1]].astype(float)
+                dfy_sum_pay_energy = dd_pay_energy_month.iloc[:, [5]].astype(float)
+                dfy_sum_pay_power_and_energy = dd_pay_energy_month.iloc[:, [6]].astype(float)
+
+                fig = mp.my_histogram(dfx, dfy_sum_energy_night, dfy_sum_pay_energy_peak,
+                                      dfy_sum_energy_half_peak, dfy_sum_pay_power,
+                                      dfy_sum_pay_energy, dfy_sum_pay_power_and_energy,
+                                      y_scale_min=0.5)
+
+                st.markdown('##### Изменение стоимости оплаты электроэнергии по зонам суток')
+                st.write(fig)
+
+                st.subheader('Наиболее значимые результаты')
+                st.metric(label="Суммарный расход электроэнергии в рассмотренном периоде", value=f'{sum_energy} кВт∙ч.')
+                st.metric(label="Суммарная оплата за мощность в рассмотренном периоде", value=f'{sum_pay_power} руб.')
+                st.metric(label="Суммарная оплата за электроэнергию в рассмотренном периоде",
+                          value=f'{sum_pay_energy} руб.')
+                st.metric(label="Итоговая оплата за мощность и электроэнергию в рассмотренном периоде",
+                          value=f'{sum_pay_power_and_energy} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в ночной зоне рассмотренном периоде",
+                          value=f'{sum_energy_night} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в ночной зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_night} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в полупиковой зоне рассмотренном периоде",
+                          value=f'{sum_energy_half_peak} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в полупиковой зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_half_peak} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в пиковой зоне рассмотренном периоде",
+                          value=f'{sum_energy_peak} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в пиковой зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_peak} руб.')
+
+                st.metric(label="Доля оплаты за мощность в общих денежных затратах составляет",
+                          value=f'{dec_per} %')
+                st.write('_________________________')
+
+            # ______________________#АНАЛИЗ ДД-ТАРИФА С РЕГУЛИРОВАНИЕМ МОЩНОСТИ#______________________#___________________#
+
+            check_d_tariff = st.checkbox('Двухставочно-дифференцированный тариф при регулировании '
+                                         'не превышения вечернего максимума над утренним')
+            if check_d_tariff:
+                st.subheader('Двухставочно-дифференцированного тарифа при регулировании мощности '
+                             'для обеспечения условия перехода на ДД-тариф')
+                st.write('Двухставочно-дифференцированный тариф с оплатой за фактическую мощность с основной ставкой '
+                         'а (руб/кВт) за 1 кВт и дополнительной ставкой b (руб/кВт∙ч) за 1 кВт∙ч '
+                         'с учетом корректирующих коэффициентов к основной и дополнительной ставкам по зонам суток '
+                         'определяется по формуле:')
+                st.latex(r'''П_{дд} = {a} \cdotp {k_{a}} \cdotp {P_{ф.max}} + {b} \cdotp ({{k_{н}\cdotp} {W_{н}}}+
+                          {{k_{пп}\cdotp} {W_{пп}}} + {{k_{п}\cdotp} {W_{пп}}} )''')
+                st.write('_________________________')
+                st.markdown('##### Результаты расчета тарифных коэффициентов')
+                st.write('Тарифные коэффициенты зависят от продолжительности и границы тарифных зон суток '
+                         'для всех расчетных периодов (месяцев) календарного года являются едиными и устанавливаются:\n'
+                         '- ночная: tн = 7 ч (с 23:00 до 6:00); \n'
+                         '- полупиковая: tпп = 14 ч (с 6:00 до 8:00 и с 11:00 до 23:00); \n'
+                         '- пиковая: tп = 3 ч (с 8:00 до 11:00)')
+
+                dif_tariff = an.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
+                tariff_coefficients = dif_tariff.calculation_tariff_coefficients().reset_index()
+                st.write(tariff_coefficients.astype(str))
+                st.write('_________________________')
+
+                st.markdown('##### Результаты расчета затрат электроэнергии по тарифным зонам')
+                energy_analyzer_month = dif_tariff.dd_energy_analyzer_month().reset_index()
+                st.write(energy_analyzer_month.astype(str))
+                # Расход электроэнергии по зонам
+                wn = dif_tariff.sum_energy_night
+                wp = dif_tariff.sum_energy_peak
+                wpp = dif_tariff.sum_energy_half_peak
+                sum_energy = dif_tariff.sum_energy
+                st.metric(label="Суммарный расход электроэнергии в рассмотренном периоде", value=f'{sum_energy} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в ночной зоне", value=f'{wn} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в пиковой зоне", value=f'{wp} кВт∙ч.')
+                st.metric(label="Суммарный расход электроэнергии в полупиковой зоне", value=f'{wpp} кВт∙ч.')
+
+                # Баланс распределения затрат ЭЭ по зонам тарифным
+                wn_per = round(wn / sum_energy * 100, 1)
+                wp_per = round(wp / sum_energy * 100, 1)
+                wpp_per = round(wpp / sum_energy * 100, 1)
+
+                st.markdown('##### Структура электропотребления по зонам суток')
+                st.write(f'В балансе электропотребления затраты электроэнергии в ночной зоне составляют {wn_per} %, '
+                         f'в полупиковой {wpp_per} % и пиковой {wp_per} % соответственно. ')
+
+                list_pay_dec = [wn_per, wp_per, wpp_per]
+                list_labels = ['Суммарный расход электроэнергии в ночной зоне',
+                               'Суммарный расход электроэнергии в пиковой зоне',
+                               'Суммарный расход электроэнергии в полупиковой зоне']
+                fig = mp.my_pie(list_values=list_pay_dec, list_labels=list_labels)
+                st.write(fig)
+
+                dfx = energy_analyzer_month.iloc[:, [0]].astype(str)
+                dfy_night_energy = energy_analyzer_month.iloc[:, [1]].astype(float)
+                dfy_half_peak_energy = energy_analyzer_month.iloc[:, [2]].astype(float)
+                dfy_peak_energy = energy_analyzer_month.iloc[:, [3]].astype(float)
+                dfy_full_energy = energy_analyzer_month.iloc[:, [4]].astype(float)
+
+                fig = mp.my_histogram(dfx, dfy_night_energy, dfy_half_peak_energy, dfy_peak_energy,
+                                      dfy_full_energy, y_scale_min=0)
+                st.markdown('##### Изменение электропотребления по зонам суток')
+                st.write(fig)
+
+                st.write('_________________________')
+
+                st.markdown('##### Результаты анализа оплаты за электроэнергию по двухставочно-дифференцированному '
+                            'тарифу')
+
+                dif_tariff.calculation(type_tariff=1)
+                sum_pay_energy = dif_tariff.sum_pay_energy
+                sum_pay_power = dif_tariff.sum_pay_power
+                sum_pay_power_and_energy = dif_tariff.sum_pay_power_and_energy
+
+                sum_energy_night = dif_tariff.sum_energy_night
+                sum_pay_energy_night = dif_tariff.sum_pay_energy_night
+
+                sum_energy_half_peak = dif_tariff.sum_energy_half_peak
+                sum_pay_energy_half_peak = dif_tariff.sum_pay_energy_half_peak
+
+                sum_energy_peak = dif_tariff.sum_energy_peak
+                sum_pay_energy_peak = dif_tariff.sum_pay_energy_peak
+
+                dec_per = round((sum_pay_power / sum_pay_power_and_energy * 100), 1)
+
+                dd_pay_energy_month = dif_tariff.df_pay_energy_month.reset_index().iloc[:, [0, 14, 15, 16, 17, 18, 19]]
+                st.write(dd_pay_energy_month.astype(str))
+
+                dfx = dd_pay_energy_month.iloc[:, [0]].astype(str)
+                dfy_sum_energy_night = dd_pay_energy_month.iloc[:, [2]].astype(float)
+                dfy_sum_pay_energy_peak = dd_pay_energy_month.iloc[:, [3]].astype(float)
+                dfy_sum_energy_half_peak = dd_pay_energy_month.iloc[:, [4]].astype(float)
+                dfy_sum_pay_power = dd_pay_energy_month.iloc[:, [1]].astype(float)
+                dfy_sum_pay_energy = dd_pay_energy_month.iloc[:, [5]].astype(float)
+                dfy_sum_pay_power_and_energy = dd_pay_energy_month.iloc[:, [6]].astype(float)
+
+                fig = mp.my_histogram(dfx, dfy_sum_energy_night, dfy_sum_pay_energy_peak,
+                                      dfy_sum_energy_half_peak, dfy_sum_pay_power,
+                                      dfy_sum_pay_energy, dfy_sum_pay_power_and_energy,
+                                      y_scale_min=0.5)
+
+                st.markdown('##### Изменение стоимости оплаты электроэнергии по зонам суток')
+                st.write(fig)
+
+                st.subheader('Наиболее значимые результаты')
+                st.metric(label="Суммарный расход электроэнергии в рассмотренном периоде", value=f'{sum_energy} кВт∙ч.')
+                st.metric(label="Суммарная оплата за мощность в рассмотренном периоде", value=f'{sum_pay_power} руб.')
+                st.metric(label="Суммарная оплата за электроэнергию в рассмотренном периоде",
+                          value=f'{sum_pay_energy} руб.')
+                st.metric(label="Итоговая оплата за мощность и электроэнергию в рассмотренном периоде",
+                          value=f'{sum_pay_power_and_energy} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в ночной зоне рассмотренном периоде",
+                          value=f'{sum_energy_night} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в ночной зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_night} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в полупиковой зоне рассмотренном периоде",
+                          value=f'{sum_energy_half_peak} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в полупиковой зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_half_peak} руб.')
+
+                st.metric(label="Суммарный расход электроэнергии в пиковой зоне рассмотренном периоде",
+                          value=f'{sum_energy_peak} кВт∙ч.')
+                st.metric(label="Итоговая оплата за электроэнергию в пиковой зоне в рассмотренном периоде",
+                          value=f'{sum_pay_energy_peak} руб.')
+
+                st.metric(label="Доля оплаты за мощность в общих денежных затратах составляет",
+                          value=f'{dec_per} %')
+                st.write('_________________________')
+
+            st.write('_________________________')
+
+         # ______________________#СРАВНЕНИЕ ТАРИФОВ ОПЛАТЫ ЗА ЭЭ#______________________#___________________#
+
+            st.sidebar.markdown('#### Сравнение тарифов оплаты за электроэнергию')
+            compare_tariff = st.sidebar.checkbox('Выполнить сравнение тарифов')
+            st.sidebar.write('____')
+            if compare_tariff:
+                st.markdown('## Сравнение тарифов оплаты за электроэнергию')
+                st.markdown('#### ')
+                base_tariff = df_initial_data.iloc[8, 1]
+                if base_tariff == 0:
+                    name_base_tariff = 'двухставочный тариф с оплатой за заявленную мощность'
+                    st.warning(f' Существующий тариф: \n {name_base_tariff}')
+                elif base_tariff == 1:
+                    name_base_tariff = ' двухставочный тариф с оплатой за фактическую мощность'
+                    st.warning(f' Существующий тариф: \n {name_base_tariff}')
+                elif base_tariff == 2:
+                    name_base_tariff = 'двухставочно-дифференцированный тариф с оплатой за фактическую мощность'
+                    st.warning(f' Существующий тариф: \n {name_base_tariff}')
+                else:
+                    st.warning(f' Существующий тариф: не задан')
+
+
+                # Делаем выводы по результатам расчета тарифов
+                #Агрегированные результаты сравнения тарифов
+
+                d_tariff_declared = an.DTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
+                d_tariff_declared.calculation()
+
+                d_tariff = an.DTariffDeclared(df=df1, ab=ab, bb=bb, kt=kt, kb=kb, declared=df3)
+                d_tariff.calculation()
+
+                dif_tariff = an.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
+                dif_tariff.calculation()
+
+                dif_tariff_reg = an.DifferTariff(df=df1, ab=ab, bb=bb, kt=kt, kb=kb)
+                dif_tariff_reg.calculation(type_tariff=1)
+
+                df_pay = pd.DataFrame({'Тариф оплаты за электроэнергию':
+                                           ['Д-тариф с оплатой за заявленную мощность',
+                                            'Д-тариф с оплатой за фактическую мощность',
+                                            'ДД-тариф с оплатой за фактическую мощность без изменения режима работы',
+                                            'ДД-тариф с оплатой за фактическую мощность при регулировании '
+                                            'не превышения вечернего максимума'],
+                                       'Суммарная оплата за мощность, руб.':
+                                           [d_tariff_declared.sum_pay_power, d_tariff.sum_pay_power,
+                                            dif_tariff.sum_pay_power, dif_tariff_reg.sum_pay_power],
+                                       'Суммарная оплата за электроэнергию, руб.':
+                                           [d_tariff_declared.sum_pay_energy, d_tariff.sum_pay_energy,
+                                            dif_tariff.sum_pay_energy, dif_tariff_reg.sum_pay_energy],
+                                       'Суммарная оплата за электроэнергию и мощность, руб.':
+                                           [d_tariff_declared.sum_pay_power_and_energy,
+                                            d_tariff.sum_pay_power_and_energy,
+                                            dif_tariff.sum_pay_power_and_energy,
+                                            dif_tariff_reg.sum_pay_power_and_energy],
+                                       'Средний тариф за 1 кВт·ч электроэнергии, руб./ кВт·ч':
+                                           [d_tariff_declared.mean_tariff, d_tariff.mean_tariff, dif_tariff.mean_tariff,
+                                            dif_tariff_reg.mean_tariff],
+                                       'Индикатор наименования тарифа': [0, 1, 2, 3]
+                                       })
+                min_pay = df_pay['Суммарная оплата за электроэнергию и мощность, руб.'].min()
+
+                ind_opt = int(df_pay[df_pay.iloc[:, 3] == min_pay]['Индикатор наименования тарифа'].values[0])
+
+                tar_opt = df_pay[df_pay.iloc[:, 3] == min_pay]['Тариф оплаты за электроэнергию'].values[0]
+                pay_opt = float(
+                    df_pay[df_pay.iloc[:, 3] == min_pay]['Суммарная оплата за электроэнергию и мощность, руб.'].values[
+                        0])
+                # Оптимальная стоимость 1 кВтч
+                energy_unit_cost_opt = float(
+                    df_pay[df_pay.iloc[:, 3] == min_pay]['Средний тариф за 1 кВт·ч электроэнергии, руб./ кВт·ч'].values[
+                        0])
+
+                tar_exist = df_pay[df_pay.iloc[:, 5] == base_tariff]['Тариф оплаты за электроэнергию'].values[0]
+                pay_exist = float(
+                    df_pay[df_pay.iloc[:, 5] == base_tariff]['Суммарная оплата за электроэнергию и мощность, руб.'].
+                    values[0])
+
+                energy_unit_pay_exist = float(
+                    df_pay[df_pay.iloc[:, 5] == base_tariff][
+                        'Средний тариф за 1 кВт·ч электроэнергии, руб./ кВт·ч'].values[0])
+
+                delta_pay = pay_exist - pay_opt
+                df_pay = df_pay.sort_values(by='Суммарная оплата за электроэнергию и мощность, руб.')
+                df_pay['Эффективность'] = round((pay_exist -
+                                                 df_pay[
+                                                     'Суммарная оплата за электроэнергию и мощность, руб.']) / pay_exist * 100,
+                                                3)
+
+                df_pay_fill = df_pay.drop(['Индикатор наименования тарифа'], axis=1)
 
 
 
 
+                # Делаем выводы по результатам расчета тарифов
+                if base_tariff < ind_opt or base_tariff > ind_opt:
+                    conclusion3 = f'\t1. Существующий тариф оплаты за электрическую энергию ({tar_exist}) не является оптимальным. \n\t' \
+                                  f'2. Переход на {tar_opt} обеспечит экономический эффект в размере {delta_pay} руб. и ' \
+                                  f'снижение стоимости 1 кВтч с {energy_unit_pay_exist} до {energy_unit_cost_opt} руб/кВтч. \n\t'
+                    if base_tariff == 1:
+                        temp_pay = float(df_pay[df_pay.iloc[:, 5] == 3]
+                                         ['Суммарная оплата за электроэнергию и мощность, руб.']) - pay_opt
+                        temp_cons = f'3. Переход на дифференцированную форму оплаты за электроэнергию даже в случае полного ' \
+                                    f'контроля не превышение вечернего минимума над утренним приведет к увеличению ' \
+                                    f'стоимости электроэнергии на {temp_pay} руб. \n\t' \
+                                    f'4. Переход к дифференцированной форме оплаты будет эффективен только в случае значительного ' \
+                                    f'изменения графика работы предприятия.'
+                        conclusion3 = conclusion3 + temp_cons
+                    if base_tariff == 2:
+                        temp_pay = float(df_pay[df_pay.iloc[:, 5] == 1]
+                                         ['Суммарная оплата за электроэнергию и мощность, руб.']) - pay_opt
+                        temp_pay_1 = float(df_pay[df_pay.iloc[:, 5] == 1]
+                                           ['Суммарная оплата за электроэнергию и мощность, руб.']) - \
+                                     float(df_pay[df_pay.iloc[:, 5] == 2]
+                                           ['Суммарная оплата за электроэнергию и мощность, руб.'])
+                        if temp_pay_1 == 0:
+                            temp_cons_2 = f'Переход на двухставочную форму оплаты не приведет к изменению стоимости ' \
+                                          f'электроэнергии (разница тарифов {temp_pay_1} руб.) без регулирования суммарного ' \
+                                          f'графика нагрузок, в котором вечерний максимум будет ниже утреннего максимума ' \
+                                          f'активной мощности.'
+                        else:
+                            temp_cons_2 = ''
+
+                        temp_cons_3 = f'3. {temp_cons_2} При выполнении условия оплаты за электроэнергию по ДД-тарифу переход на ' \
+                                      f'двухставочную форму оплаты приведет ' \
+                                      f'к увеличению стоимости электроэнергии за рассмотренный период на {temp_pay} руб. \n\t' \
+                                      f'4. Для повышения эффективности использования дифференцированной оплаты необходимо реализовать ' \
+                                      f'ряд условий: контролировать не превышение вечернего пика над утренним; ' \
+                                      f'обеспечить снижения активной мощности в пиковой тарифной зоне, где действует ' \
+                                      f'максимальная оплата электроэнергии; загрузить производственные мощности в ночной зоне, ' \
+                                      f'где действует минимальная оплата за электроэнергию.'
+                        conclusion3 = conclusion3 + temp_cons_3
+                    if base_tariff == 0:
+                        temp_pay = float(df_pay[df_pay.iloc[:, 5] == 0]
+                                         ['Суммарная оплата за электроэнергию и мощность, руб.']) - pay_opt
+                        temp_cons = f'3. Проведенный анализ отражает не эффективность оплаты электроэнергии по двухставочному тарифу ' \
+                                    f'с заявленной мощностью в общем случае годовая разница стоимости электроэнергии между ' \
+                                    f'существующим тарифом и оптимальным достигает {temp_pay} руб. \n\t'
+                        conclusion3 = conclusion3 + temp_cons
+                elif base_tariff == ind_opt:
+                    conclusion3 = f'1. Существующий тариф оплаты за электрическую энергию ({tar_exist}) является оптимальным. \n\t' \
+                                  f'2. При существующем тарифе достигается минимальная стоимость 1 кВтч равная ' \
+                                  f'{energy_unit_cost_opt} руб/кВтч. \n\t'
+                    if base_tariff == 1:
+                        temp_pay = float(df_pay[df_pay.iloc[:, 5] == 3]
+                                         ['Суммарная оплата за электроэнергию и мощность, руб.']) - pay_opt
+                        temp_cons = f'3. Переход на дифференцированную форму оплаты за электроэнергию даже в случае полного ' \
+                                    f'контроля не превышения вечернего минимума над утренним приведет к увеличению ' \
+                                    f'стоимости электроэнергии на {temp_pay} руб.\n\t' \
+                                    f'4. Переход к дифференцированной форме оплаты будет эффективен только в случае значительного ' \
+                                    f'изменения графика работы предприятия.'
+                        conclusion3 = conclusion3 + temp_cons
+                    if base_tariff == 2:
+                        temp_pay = float(df_pay[df_pay.iloc[:, 5] == 1]
+                                         ['Суммарная оплата за электроэнергию и мощность, руб.']) - pay_opt
+                        temp_cons = f'3. Переход на двухставочную форму оплаты экономически не эффективен поскольку приведен ' \
+                                    f'к увеличению стоимости электроэнергии на {temp_pay} руб.\n\t' \
+                                    f'4. Для повышения эффективности использования дифференцированной оплаты необходимо реализовать ' \
+                                    f'ряд условий: контролировать не превышение вечернего пика над утренним; ' \
+                                    f'обеспечить снижения активной мощности в пиковой тарифной зоне, где действует ' \
+                                    f'максимальная оплата электроэнергии; загрузить производственные мощности в ночной зоне, ' \
+                                    f'где действует минимальная оплата за электроэнергию.'
+                        conclusion3 = conclusion3 + temp_cons
+                else:
+                    conclusion3 = ''
+                st.info(conclusion3)
 
 
+
+
+                st.markdown('##### Суммарная оплата за электроэнергию и мощность')
+                energy = d_tariff.energy_analyzer_month().iloc[:, [3]]
+
+                declared_pay = d_tariff_declared.df_pay_energy_month.iloc[:, [8]]
+                declared_pay = declared_pay.rename(columns={declared_pay.columns[0]: 'Д-тариф оплатой '
+                                                                                     'за заявленную мощностью, руб.'})
+
+                d_pay = d_tariff.df_pay_energy_month.iloc[:, [8]]  # Суммарная оплата за ЭЭ
+                d_pay = d_pay.rename(columns={d_pay.columns[0]: 'Д-тариф с оплатой за фактическую мощностью, руб.'})
+
+                dd_pay_energy_month = dif_tariff.df_pay_energy_month.reset_index().iloc[:, [0, 14, 15, 16, 17, 18, 19]]
+                dd_pay = dd_pay_energy_month.set_index('Период наблюдений').iloc[:, [5]]  # Суммарная оплата за ЭЭ
+                dd_pay = dd_pay.rename(columns={dd_pay.columns[0]: 'ДД-тариф без изменения режима работы, руб.'})
+
+                only_dd_pay_energy_month = dif_tariff_reg.df_pay_energy_month.reset_index().iloc[:,
+                                           [0, 14, 15, 16, 17, 18, 19]]
+                dd_pay_regul = only_dd_pay_energy_month.set_index('Период наблюдений').iloc[:,
+                               [5]]  # Суммарная оплата за ЭЭ
+                dd_pay_regul = dd_pay_regul.rename(columns={dd_pay_regul.columns[0]:
+                                                                'ДД-тариф при выполнении '
+                                                                'условия дифференцирования, руб.'})
+
+                dfx = energy.reset_index().iloc[:, [0]].astype(str)
+                dfy_declared_pay = declared_pay.astype(float)
+                dfy_d_pay = d_pay.astype(float)
+                dfy_dd_pay = dd_pay.astype(float)
+                dfy_dd_pay_regul = dd_pay_regul.astype(float)
+                fig = mp.my_histogram(dfx, dfy_declared_pay,
+                                      dfy_d_pay,
+                                      dfy_dd_pay,
+                                      dfy_dd_pay_regul,
+                                      y_scale_min=0.5)
+                st.write(fig)
+
+                #st.subheader('Сравнение оплаты при различных тарифах')
+                compare = an.CompareOfTariffs(df=df1, ab=ab, bb=bb, kt=kt, kb=kb, declared=df3)
+                dict_compare = compare.price_per_one_energy()
+                for key, value in dict_compare:
+                    st.metric(label=f"{key}",
+                              value=f'{value} руб.')
 
 
 
     except Exception as e:
         st.text(traceback.format_exc())
-        pass
+    pass
 
 
 def app_authorization():
@@ -907,9 +1388,8 @@ def app_authorization():
     st.sidebar.write('________')
     if menu_choice == 'Авторизация пользователя':
         st.sidebar.write('Для работы с ресурсом введите данные авторизации')
-        user_name = st.sidebar.text_input('Имя пользователя')
-        password = st.sidebar.text_input('Пароль', type="password")
-
+        user_name = st.sidebar.text_input('Имя пользователя', value='root')
+        password = st.sidebar.text_input('Пароль', type="password", value='123')
 
         if user_name == 'root' and password == '123':
             st.sidebar.success('Вы вошли под учетной записью администратора')
@@ -923,8 +1403,8 @@ def app_authorization():
 
                 year_now = datetime.datetime.now().year
                 month_now = datetime.datetime.now().month
-                date_finish_servise = st.date_input('Дата окончания подписки',  value=datetime.date(year_now+1,
-                                                                                                    month_now+2, 1))
+                date_finish_servise = st.date_input('Дата окончания подписки', value=datetime.date(year_now + 1,
+                                                                                                   month_now + 2, 1))
                 if st.button('Ввести'):
                     create_user_table()
                     add_user_data(username=new_user_name, password=new_password,
@@ -944,7 +1424,7 @@ def app_authorization():
             pass
         elif check_user(username=user_name, password=password) == 1:
             st.sidebar.success('Вы успешно вошли в приложение')
-            st.sidebar.success(f'Активно до: { data_activate(username=user_name, password=password)}')
+            st.sidebar.success(f'Активно до: {data_activate(username=user_name, password=password)}')
             st.sidebar.write('_________')
             app()
 
@@ -958,11 +1438,11 @@ def app_authorization():
         pass
 
 
-
 # Создание базы данных для входа пользователей
 # https://www.youtube.com/watch?v=HU_kd-1uIkQ
 conn = sqlite3.connect('data.db')
 c = conn.cursor()
+
 
 def create_user_table():
     c.execute('CREATE TABLE IF NOT EXISTS usertable(username TEXT UNIQUE, password TEXT NOT NULL, '
@@ -971,31 +1451,36 @@ def create_user_table():
 
 def add_user_data(username, password, date_finish_servise):
     c.execute('INSERT INTO usertable(username, password, date_finish_servise) VALUES (?, ?, ?) '
-              'ON CONFLICT(username) DO NOTHING', # Если имя повторяется - ничего не делает
+              'ON CONFLICT(username) DO NOTHING',  # Если имя повторяется - ничего не делает
               (username, password, date_finish_servise))
     conn.commit()
 
+
 def check_user(username, password):
     c.execute('SELECT * FROM usertable WHERE username =? and password=?', (username, password))
-    len_data=len(c.fetchall())
-    if len_data==0:
+    len_data = len(c.fetchall())
+    if len_data == 0:
         return 0
     else:
         return 1
+
 
 def data_activate(username, password):
     data = c.execute('SELECT date_finish_servise FROM usertable WHERE (username =?) and (password=?)',
                      [username, password]).fetchall()[0][0]
     return data
 
+
 def delete_user_from_bd(username):
     c.execute('DELETE FROM usertable WHERE username=?', [username])
     conn.commit()
+
 
 def view_all_user():
     c.execute('SELECT * FROM usertable')
     df = pd.read_sql("SELECT * FROM usertable ", conn)
     return df
+
 
 if __name__ == '__main__':
     app_authorization()

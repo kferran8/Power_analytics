@@ -53,9 +53,14 @@ class PowerGraphCoefficients:
 
     def _timedelta(self, df):
         df = round(df.fillna(0), 2)
-        _df = df.iloc[:, 0] - pd.Timedelta(seconds=1)
-        merge = pd.concat([_df, df.iloc[:, [1, 2]]], axis=1)
-        return merge
+        def rule(datatime):
+            if (datatime.hour == 0) and (datatime.minute == 0):
+                return datatime - pd.Timedelta(seconds=1)
+            else:
+                return datatime
+        df['Дата'] = df.apply(lambda x: rule(x['Дата']), axis=1)
+        return df
+
 
     def _rename(self, df):
         """Переименовывает колонки датафрейма в более удобный вид"""
@@ -422,11 +427,11 @@ class DTariff(PowerGraphCoefficients):
                                                                            'Тариф на электрическую энергию, руб/кВтч'] * \
                                                                        pay_energy_day[
                                                                            'Расход электроэнергии, кВтч'],2)
-        pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] = pay_energy_day['Оплата за электрическую ' \
+        pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] = round(pay_energy_day['Оплата за электрическую ' \
                                                                                               'мощность, руб'] + \
                                                                                pay_energy_day[
                                                                                    'Оплата за электрическую энергию, ' \
-                                                                                   'руб']
+                                                                                   'руб'],2)
         pay_energy_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] \
             = round(pay_energy_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
               pay_energy_day['Расход электроэнергии, кВтч'],4)
@@ -448,7 +453,7 @@ class DTariff(PowerGraphCoefficients):
                        'Расход электроэнергии, кВтч': 'sum',
                        'Тариф на электрическую энергию, руб/кВтч': lambda x: np.round(np.mean(x), 5),
                        'Оплата за электрическую энергию, руб': 'sum',
-                       'Суммарная оплата за электроэнергию и мощность, руб': 'sum',
+                       'Суммарная оплата за электроэнергию и мощность, руб': lambda x: np.round(np.sum(x), 2),
                        })
         pay_energy_month['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
            round( pay_energy_month['Суммарная оплата за электроэнергию и мощность, руб'] / \
@@ -730,10 +735,6 @@ class DifferTariff(DTariff, PowerLimits):
         self.sum_pay_energy_half_peak = None
         self.sum_pay_power_and_energy = None
 
-        self.create_xlsx = self.df.to_excel('Result_Excel/Расчет оплаты ДД-тарифа.xlsx',
-                                            sheet_name='Исходные данные',
-                                            index=False)
-
     def calculation_tariff_coefficients(self):
         """Результат метода: Датафрейм:
              Индекс: период по месяцам.
@@ -763,7 +764,7 @@ class DifferTariff(DTariff, PowerLimits):
 
     def dd_energy_analyzer_day(self):
         """Результат метода: Датафрейм:
-               Индекс: два индекса период наблблений (2020-01) и номер суток (1,2..).
+               Индекс: два индекса период наблюдений (2020-01) и номер суток (1,2..).
                Столбцы: Расход ЭЭ в ночной зоне по суткам,
               ' Расход ЭЭ в пиковой зоне по суткам',
               ' Расход ЭЭ в полупиковой зоне по суткам,
@@ -772,11 +773,11 @@ class DifferTariff(DTariff, PowerLimits):
         df['Период наблюдений'] = df['Период наблюдений'].dt.to_period('M')
         df['Количество дней в месяце'] = df['Период наблюдений'].apply(lambda x: x.day)
         # Расход элекроэнергии
-        df['Расход электроэнергии, кВтч'] = df['Активная мощность, кВт'].apply(lambda x: round(0.5 * x, 0))
+        df['Расход электроэнергии, кВтч'] = df['Активная мощность, кВт'].apply(lambda x: round(0.5 * x, 2))
         df_energy_day = df.groupby(['Период наблюдений', 'День']). \
             aggregate({'Активная мощность, кВт': 'count', 'День': 'count', 'Количество дней в месяце': 'mean',
                        'Расход электроэнергии, кВтч': 'sum'})
-        df_energy_day['День'] = df_energy_day['День'].apply(lambda x: round(x / (48), 0))
+        df_energy_day['День'] = df_energy_day['День'].apply(lambda x: round(x / (48), 2))
         df_energy_day = df_energy_day.rename(columns={'Активная мощность, кВт':
                                                           'Количество значений 30-и минутной '
                                                           'мощности попавших в диапазон',
@@ -794,19 +795,19 @@ class DifferTariff(DTariff, PowerLimits):
         df_energy_night = df_full_in_night.groupby(['Период наблюдений', 'День']). \
             aggregate({'Расход электроэнергии, кВтч': 'sum'}). \
             rename(columns={'Расход электроэнергии, кВтч': 'Расход электроэнергии в ночной зоне, кВтч'})
-        self.sum_energy_night = df_energy_night['Расход электроэнергии в ночной зоне, кВтч'].sum()
+        self.sum_energy_night = round(df_energy_night['Расход электроэнергии в ночной зоне, кВтч'].sum())
 
         # Расход ЭЭ в пиковой зоне
         df_energy_peak = df_full_in_peak.groupby(['Период наблюдений', 'День']). \
             aggregate({'Расход электроэнергии, кВтч': 'sum'}). \
             rename(columns={'Расход электроэнергии, кВтч': 'Расход электроэнергии в пиковой зоне, кВтч'})
-        self.sum_energy_peak = df_energy_peak['Расход электроэнергии в пиковой зоне, кВтч'].sum()
+        self.sum_energy_peak = round(df_energy_peak['Расход электроэнергии в пиковой зоне, кВтч'].sum())
 
         # Расход ЭЭ в полупиковой зоне
         df_energy_half_peak = df_full_in_half_peak.groupby(['Период наблюдений', 'День']). \
             aggregate({'Расход электроэнергии, кВтч': 'sum'}). \
             rename(columns={'Расход электроэнергии, кВтч': 'Расход электроэнергии в полупиковой зоне, кВтч'})
-        self.sum_energy_half_peak = df_energy_half_peak['Расход электроэнергии в полупиковой зоне, кВтч'].sum()
+        self.sum_energy_half_peak = round(df_energy_half_peak['Расход электроэнергии в полупиковой зоне, кВтч'].sum())
 
         # Соеденяем все данные в один фрейм
         df_energy_day = pd.concat([df_energy_night, df_energy_peak, df_energy_half_peak], axis=1)
@@ -814,7 +815,7 @@ class DifferTariff(DTariff, PowerLimits):
             df_energy_day['Расход электроэнергии в ночной зоне, кВтч'] + \
             df_energy_day['Расход электроэнергии в пиковой зоне, кВтч'] + \
             df_energy_day['Расход электроэнергии в полупиковой зоне, кВтч']
-        self.sum_energy = df_energy_day['Суммарный расход электроэнергии, кВтч'].sum()
+        self.sum_energy = round(df_energy_day['Суммарный расход электроэнергии, кВтч'].sum(),0)
         return df_energy_day
 
     def dd_energy_analyzer_month(self):
@@ -826,10 +827,10 @@ class DifferTariff(DTariff, PowerLimits):
               Суммарный расход ЭЭ"""
         df_energy = self.dd_energy_analyzer_day().reset_index()
         df_energy_month = df_energy.groupby('Период наблюдений'). \
-            aggregate({'Расход электроэнергии в ночной зоне, кВтч': 'sum',
-                       'Расход электроэнергии в пиковой зоне, кВтч': 'sum',
-                       'Расход электроэнергии в полупиковой зоне, кВтч': 'sum',
-                       'Суммарный расход электроэнергии, кВтч': 'sum'})
+            aggregate({'Расход электроэнергии в ночной зоне, кВтч': lambda x: np.round(np.sum(x), 0),
+                       'Расход электроэнергии в пиковой зоне, кВтч': lambda x: np.round(np.sum(x), 0),
+                       'Расход электроэнергии в полупиковой зоне, кВтч': lambda x: np.round(np.sum(x), 0),
+                       'Суммарный расход электроэнергии, кВтч':  lambda x: np.round(np.sum(x), 0)})
 
         return df_energy_month
 
@@ -865,28 +866,49 @@ class DifferTariff(DTariff, PowerLimits):
         Индикатор - количество дней в месяце превышение вечер утренним пиков',
         'Сред мощность превышения вечернего максимума утренним, кВт',
        'Макс мощность превышения вечернего максимума утренним, кВт',
-       'Выполняется условие оплаты по ДД-тарифу?'"""
+       'Выполняется условие оплаты по ДД-тарифу?'
+       'Наибольший максимум активной мощности в часы утреннего максимума '
+                                                   'энергосистемы , кВт'
+       'Наибольший максимум активной мощности в часы вечернего максимума '
+                                                   'энергосистемы , кВт'"""
         dd_power_analyzer_day = self.dd_power_analyzer_day().reset_index()
         # Создаем дополнительные для анализа столбцы
         dd_power_analyzer_day['Сред мощность превышения вечернего максимума утренним, кВт'] = \
             dd_power_analyzer_day['Мощность превышения вечернего максимума утренним, кВт']
         dd_power_analyzer_day['Макс мощность превышения вечернего максимума утренним, кВт'] = \
             dd_power_analyzer_day['Мощность превышения вечернего максимума утренним, кВт']
+        dd_power_analyzer_day['Наибольший максимум активной мощности в часы утреннего максимума энергосистемы, кВт'] = \
+            dd_power_analyzer_day['Максимум активной мощности в часы утреннего максимума энергосистемы , кВт']
+        dd_power_analyzer_day['Наибольший максимум активной мощности в часы вечернего максимума энергосистемы, кВт'] = \
+            dd_power_analyzer_day['Максимум активной мощности в часы вечернего максимума энергосистемы , кВт']
+
         dd_power_analyzer_day = dd_power_analyzer_day.drop(['Мощность превышения вечернего максимума утренним, кВт'],
                                                            axis=1)
+
 
         dd_power_analyzer_month = round(dd_power_analyzer_day.groupby('Период наблюдений'). \
                                         aggregate({'Индикатор': 'sum',
                                                    'Сред мощность превышения вечернего максимума утренним, кВт': 'mean',
-                                                   'Макс мощность превышения вечернего максимума утренним, кВт': 'max'
+                                                   'Макс мощность превышения вечернего максимума утренним, кВт': 'max',
+                                                   'Наибольший максимум активной мощности в часы утреннего максимума '
+                                                   'энергосистемы, кВт': 'max',
+                                                   'Наибольший максимум активной мощности в часы вечернего максимума '
+                                                   'энергосистемы, кВт': 'max',
                                                    }), 2)
 
-        # Правило для выводов о Тарифе либо Д либо ДД, в зависимости от наличия дней превышения
-        def rule(x):
-            return 'Да' if x == 0 else 'Нет'
 
-        dd_power_analyzer_month['Выполняется условие оплаты по ДД-тарифу?'] = dd_power_analyzer_month['Индикатор']. \
-            apply(lambda x: rule(x))
+        # Правило для выводов о Тарифе либо Д либо ДД, в зависимости от того ,превышает ли вечерний
+        # максимум утренний в расчетной периоде
+        def rule_temp(x,y):
+            return 'Да' if x > y else 'Нет'
+
+        # # Правило для выводов о Тарифе либо Д либо ДД, в зависимости от того ,превышает ли вечерний
+        # # максимум утренний в расчетной периоде
+        # def rule(x):
+        #     return 'Да' if x == 0 else 'Нет'
+
+        dd_power_analyzer_month['Выполняется условие оплаты по ДД-тарифу?'] = dd_power_analyzer_month. \
+            apply(lambda x: rule_temp(x.iloc[3],x.iloc[4]), axis=1)
 
         return dd_power_analyzer_month
 
@@ -900,61 +922,74 @@ class DifferTariff(DTariff, PowerLimits):
         tariff_coefficients = self.calculation_tariff_coefficients()
         power_analyzer_day = self.dd_power_analyzer_day().reset_index().set_index('Период наблюдений')
         power_analyzer_month = self.power_analyzer_month().iloc[:, [3]]
+
         # Вытягиваем информацию о количество исследованных дней
         number_of_days_examined = self.energy_analyzer_day().reset_index().set_index('Период наблюдений').iloc[:, [2]]
         merge = pd.concat([energy_analyzer_day, power_analyzer_day, tariff_coefficients, power_analyzer_month], axis=1)
         merge['Тариф на электрическую мощность, руб/кВт'] = self.tariff_power
         merge['Тариф на электрическую энергию, руб/кВтч'] = self.tariff_energy
-        merge = pd.concat([merge, number_of_days_examined], axis=1)
-        df_day = merge.iloc[:, [0, 12, 18, 13, 17, 19, 14, 1, 16, 2, 15, 3, 4, 7, 8, 11, 20]]
+        condition_pay = self.dd_power_analyzer_month().iloc[:, [5]]
+
+        condition_pay = condition_pay.replace('Нет', int(0))
+        condition_pay = condition_pay.replace('Да', int(1))
+
+        merge = pd.concat([merge, number_of_days_examined, condition_pay], axis=1)
+
+        df_day = merge.iloc[:, [0, 12, 18, 13, 17, 19, 14, 1, 16, 2, 15, 3, 4, 7, 8, 21, 20]]
+
         df_day = df_day.fillna(0)
 
         # Переделываем индикатор. Если в месяце есть дни, где пик вечера превышает утро, то по месяцу 1, нет  - 0
-        temp = df_day.reset_index().groupby(['Период наблюдений']).aggregate({'Индикатор': 'sum'})
-        df_day = df_day.drop(['Индикатор'], axis=1)
+        temp = df_day.reset_index().groupby(['Период наблюдений']).aggregate({'Выполняется условие оплаты по ДД-тарифу?':
+                                                                                  'mean'})
+
+        df_day = df_day.drop(['Выполняется условие оплаты по ДД-тарифу?'], axis=1) # 1 - выполняется, 0 - нет
         df_day = pd.concat([df_day, temp], axis=1)
-        df_day = df_day.rename(columns={'Индикатор': 'Количество дней превышения вечерних пиков в месяце'})
 
         # Расчет суточной за мощность
         def rule_power(key, ind, tariff_power, ka, pw, number_of_days):
             if key == 0:  # 0 - ДД или Д тариф от условия, 1 - исключительно ДД-тариф
-                if ind == 0:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
+                if ind == 1:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
                     return round(tariff_power * ka * pw / number_of_days)
                 else:
                     return round(tariff_power * pw / number_of_days)
             else:
                 return round(tariff_power * ka * pw / number_of_days)
 
+
         df_day['Оплата за электрическую мощность, руб'] = \
             df_day.apply(lambda x: rule_power(key=type_tariff,
-                                              ind=x['Количество дней превышения вечерних пиков в месяце'],
+                                              ind=x['Выполняется условие оплаты по ДД-тарифу?'],
                                               tariff_power=x['Тариф на электрическую мощность, руб/кВт'],
                                               ka=x['Понижающий коэффициент к основной ставке'],
                                               pw=x['Максимум активной мощности в часы максимума '
                                                    'энергосистемы, кВт'],
                                               number_of_days=x['Количество дней в месяце']), axis=1)
 
+
         # Расчет суточной оплаты за электроэнергию в ночной зоне
         def rule_ener_night(key, ind, tariff_energy, kn, wn):
             if key == 0:  # 0 - ДД или Д тариф от условия, 1 - исключительно ДД-тариф
-                if ind == 0:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
+                if ind == 1:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
                     return round(tariff_energy * kn * wn)
                 else:
                     return 0
             else:
                 return round(tariff_energy * kn * wn)
 
+
         df_day['Оплата за электроэнергию в ночной зоне, руб'] = \
             df_day.apply(lambda x: rule_ener_night(key=type_tariff,
-                                                   ind=x['Количество дней превышения вечерних пиков в месяце'],
+                                                   ind=x['Выполняется условие оплаты по ДД-тарифу?'],
                                                    tariff_energy=x['Тариф на электрическую энергию, руб/кВтч'],
                                                    kn=x['Тарифный ночной коэффициент'],
                                                    wn=x['Расход электроэнергии в ночной зоне, кВтч']), axis=1)
+        print(list(df_day))
 
         # Расчет суточной оплаты за электроэнергию в пиковой зоне
         def rule_ener_peak(key, ind, tariff_energy, kp, wp):
             if key == 0:  # 0 - ДД или Д тариф от условия, 1 - исключительно ДД-тариф
-                if ind == 0:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
+                if ind == 1:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
                     return round(tariff_energy * kp * wp)
                 else:
                     return 0
@@ -963,7 +998,7 @@ class DifferTariff(DTariff, PowerLimits):
 
         df_day['Оплата за электроэнергию в пиковой зоне, руб'] = \
             df_day.apply(lambda x: rule_ener_peak(key=type_tariff,
-                                                  ind=x['Количество дней превышения вечерних пиков в месяце'],
+                                                  ind=x['Выполняется условие оплаты по ДД-тарифу?'],
                                                   tariff_energy=x['Тариф на электрическую энергию, руб/кВтч'],
                                                   kp=x['Тарифный пиковый коэффициент'],
                                                   wp=x['Расход электроэнергии в пиковой зоне, кВтч']), axis=1)
@@ -971,7 +1006,7 @@ class DifferTariff(DTariff, PowerLimits):
         # Расчет суточной оплаты за электроэнергию в полупиковой зоне
         def rule_ener_ppeak(key, ind, tariff_energy, kpp, wpp):  # расход ээ в полупиквой зоне
             if key == 0:  # 0 - ДД или Д тариф от условия, 1 - исключительно ДД-тариф
-                if ind == 0:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
+                if ind == 1:  # Проверяет есть ли дни где максимум вечера больше утра, если нет - ДД-тариф
                     return round(tariff_energy * kpp * wpp)
                 else:
                     return 0
@@ -980,7 +1015,7 @@ class DifferTariff(DTariff, PowerLimits):
 
         df_day['Оплата за электроэнергию в полупиковой зоне, руб'] = \
             df_day.apply(lambda x: rule_ener_ppeak(key=type_tariff,
-                                                   ind=x['Количество дней превышения вечерних пиков в месяце'],
+                                                   ind=x['Выполняется условие оплаты по ДД-тарифу?'],
                                                    tariff_energy=x['Тариф на электрическую энергию, руб/кВтч'],
                                                    kpp=x['Тарифный полупиковый коэффициент'],
                                                    wpp=x['Расход электроэнергии в полупиковой зоне, кВтч']), axis=1)
@@ -1014,6 +1049,7 @@ class DifferTariff(DTariff, PowerLimits):
 
         self.df_pay_energy_day = df_day
 
+
         # Список столбцов суточного фрейма
         # 'День'
         # 'Количество дней в месяце
@@ -1038,6 +1074,7 @@ class DifferTariff(DTariff, PowerLimits):
         # 'Оплата за электроэнергию, руб',
         # 'Суммарная оплата за электроэнергию и мощность, руб'
 
+
         # ________________ ОПЛАТА ПО МЕСЯЦАМ_____________________
         df_month = df_day.groupby(['Период наблюдений']).aggregate(
             {'Количество дней в месяце': 'mean',
@@ -1052,7 +1089,7 @@ class DifferTariff(DTariff, PowerLimits):
              'Расход электроэнергии в пиковой зоне, кВтч': 'sum',
              'Тарифный полупиковый коэффициент': lambda x: np.round(np.mean(x), 2),
              'Расход электроэнергии в полупиковой зоне, кВтч': 'sum',
-             'Количество дней превышения вечерних пиков в месяце': 'mean',
+             'Выполняется условие оплаты по ДД-тарифу?': 'mean',
              'Оплата за электрическую мощность, руб': 'sum',
              'Оплата за электроэнергию в ночной зоне, руб': 'sum',
              'Оплата за электроэнергию в пиковой зоне, руб': 'sum',
@@ -1061,6 +1098,8 @@ class DifferTariff(DTariff, PowerLimits):
              'Суммарная оплата за электроэнергию и мощность, руб': 'sum',
              'Суммарный расход электроэнергии, кВтч': 'sum',
              })
+
+
 
         df_day['Средний тариф за 1 кВт·ч электроэнергии, руб/ кВт·ч'] = \
            round( df_day['Суммарная оплата за электроэнергию и мощность, руб'] / \
@@ -1133,9 +1172,9 @@ class CompareOfTariffs():
 
         df_total = pd.concat([pay_d_tariff, pay_declared_tariff, pay_dif_tariff, pay_dif_tariff_reg], axis=1)
 
-        dict = {'Д-тариф с заявленной мощностью': d_tariff.sum_pay_power_and_energy,
-                'Д-тариф с фактической мощностью': declared.sum_pay_power_and_energy,
-                'ДД-тариф с фактической нагрузкой': dif_tariff.sum_pay_power_and_energy,
+        dict = {'Д-тариф с заявленной мощностью': declared.sum_pay_power_and_energy,
+                'Д-тариф с фактической мощностью': d_tariff.sum_pay_power_and_energy,
+                'ДД-тариф с без изменения режима нагрузки': dif_tariff.sum_pay_power_and_energy,
                 'ДД-тариф при регулировании нагрузкой': dif_tariff_reg.sum_pay_power_and_energy}
         list_key = sorted(dict.items(), key=lambda item: item[1])
 

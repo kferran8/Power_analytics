@@ -416,7 +416,7 @@ def create_report(df_input_statistics, df_initial_data, df_declared_power):
     print(dd_power_analyzer_month)
     # count_tariff
     #Проверяем количество днейе где выполняется условие оплаты
-    count_temp = dd_power_analyzer_month.iloc[:,[4]]
+    count_temp = dd_power_analyzer_month.iloc[:,[6]]
     count_tariff = (count_temp['Выполняется условие оплаты по ДД-тарифу?'] == 'Да').sum()
     context['count_tariff'] = count_tariff
 
